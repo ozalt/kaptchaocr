@@ -1,0 +1,8 @@
+# Build context hygiene.
+target
+model/ppocrv6
+.git
+image
+clients
+*.jpg
+*.md

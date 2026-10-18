@@ -1,0 +1,12 @@
+{
+  "protocolVersion": "2025-03-26",
+  "capabilities": {
+    "tools": {
+      "listChanged": false
+    }
+  },
+  "serverInfo": {
+    "name": "kaptchowmin",
+    "version": "1.0.0"
+  }
+}

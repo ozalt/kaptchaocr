@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "captchowmin"
+version = "0.1.0"
+description = "Zero-dependency Python client for the Kaptchowmin captcha API server"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+keywords = ["captcha", "ocr", "kaptchowmin", "scraping"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["captchowmin"]

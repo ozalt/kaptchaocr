@@ -1,0 +1,81 @@
+[package]
+name = "kaptchowmin"
+version = "1.0.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Kaptchowmin — a CAPTCHA OCR/detection/slide-matching library and API server"
+
+[features]
+default = ["inline-model", "download-binaries"]
+
+# Whether to inline models when building the main binary
+inline-model = []
+
+# CUDA support
+cuda = ["ort/cuda"]
+
+# Dynamic linking
+load-dynamic = ["ort/load-dynamic"]
+
+# Auto-download the dynamic or static library, depending on load-dynamic
+download-binaries = ["ort/download-binaries"]
+
+[dependencies]
+# Inference and numerical computing; Windows DML removed for compatibility
+ort = { git = "https://github.com/86maid/ort.git", default-features = false, features = [
+  "ndarray",
+  "half",
+  "copy-dylibs",
+] }
+ndarray = "0.15"
+
+# Serialization / deserialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+
+# Image processing
+image = "0.25"
+imageproc = "0.25.0"
+
+# Encryption / hashing
+sha256 = "1.6"
+base64 = "0.22"
+
+# Web framework
+salvo = { version = "0.85", features = [
+  "oapi",
+  "anyhow",
+  "rustls",
+  "acme",
+  "logging",
+] }
+salvo_extra = { version = "0.85.0", default-features = false, features = [
+  "logging",
+] }
+
+# Logging
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing = "0.1.41"
+
+# Command-line arguments
+clap = { version = "4.5", features = ["derive"] }
+
+# TOML config parsing
+toml = "0.8"
+
+# Async runtime
+tokio = { version = "1.48", features = ["full"] }
+
+# Cache
+lru = "0.16"
+bytes = "1.11"
+async-trait = "0.1"
+
+# ANSI
+enable-ansi-support = "0.3"
+
+# MCP
+rmcp = { version = "0.12.0", features = ["server"] }
