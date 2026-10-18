@@ -28,8 +28,7 @@ and exposes both a REST API and an MCP endpoint.
   - [Custom OCR Model Import](#custom-ocr-model-import)
   - [Fine-tuned models (PP-OCRv6 captcha recognition)](#fine-tuned-models-pp-ocrv6-captcha-recognition)
 - [API server example](#api-server-example)
-  - [Running method](#running-method)
-  - [Running Examples](#running-examples)
+  - [Quick start](#quick-start)
   - [Docker](#docker)
   - [API Documentation](#api-documentation)
   - [API test examples, see the `test_api.py` file for complete tests](#api-test-examples-see-the-test_apipy-file-for-complete-tests)
@@ -383,44 +382,95 @@ R&D folder.
 
 # API server example
 
-## Running method
-```sh
-Usage: kaptchowmin.exe [OPTIONS]
+## Quick start
 
-Options:
-    --address <ADDRESS>
-        Listening address. [default: 0.0.0.0:8000]
-    --mcp
-        mcp protocol support, mutually exclusive with only_mcp.
-    --only-mcp
-        Only enable mcp protocol, do not enable normal routing, mutually exclusive with mcp.
-    --ocr
-        Enable content recognition, mutually exclusive with old.
-    --old
-        Enable the old version of model content recognition, which is mutually exclusive with OCR.
-    --det
-        Enable object detection.
-    --slide
-        Enable slider and pit recognition.
-    --ocr-charset-range <OCR_CHARSET_RANGE>
-        Global default character set, used for probability recognition. If the API does not provide a character set, this parameter is used. When the value is 0~7, it means selecting the built-in character set. Other values indicate a custom character set, such as "0123456789+-x/=". If not set, the complete character set is used without restrictions.
-    --ocr-path <OCR_PATH>
-        Content recognition model and character set path. If you have enabled the inline-model option of features (enabled by default), you don't need to care about this option unless you want to use a custom model. The model and charset paths must share the same base name, e.g. model/stock_common.onnx + model/stock_common.json. [default: model/stock_common.onnx]
-    --det-path <DET_PATH>
-        Target detection model path. If you have enabled the `inline-model` option for features (enabled by default), you don't need to worry about this option unless you want to use a custom model. [default: model/stock_det.onnx]
-    --acme <ACME>
-        Enter your domain name to automatically obtain SSL certificates, i.e., HTTPS support.
-    -h, --help
-        Print help
+### Option 1 — Docker (recommended, no toolchain required)
+
+The `Dockerfile` compiles the binary inside its build stage — the host only
+needs Docker (see the [Docker](#docker) section for details):
+
+```sh
+docker build -t kaptchowmin .   # first run only, ~10 min
+docker run --rm -p 8000:8000 kaptchowmin
 ```
 
-## Running Examples
-```sh
-# Start all functions
-kaptchowmin.exe --address 0.0.0.0:8000 --ocr --det --slide --mcp
+Everything is the image default:
+`--ocr --det --slide --manifest model/models.json --profile balanced`.
+(Once images are published to a registry this reduces to `docker pull` +
+`docker run`.)
 
-# View all options
-kaptchowmin.exe --help
+### Option 2 — Native binary from source
+
+```sh
+cargo build --release
+make run   # = ./target/release/kaptchowmin --ocr --det --slide \
+           #     --manifest model/models.json --profile balanced
+```
+
+`make run PROFILE=accurate` (or `fast`) selects another model tier,
+`make run ADDR=0.0.0.0:8000` exposes the server on the network, and
+`make help` lists all convenience targets.
+
+### Option 3 — Prebuilt binary (no Docker, no build)
+
+Download the `*-inline.zip` for your platform from the Releases page and
+unzip it — the archive contains a static binary with the stock models
+embedded. Start it with the same flags as above.
+
+### Verify the server
+
+```sh
+curl http://127.0.0.1:8000/status
+```
+
+## CLI options
+
+```sh
+Usage: kaptchowmin [OPTIONS]
+
+Options:
+      --address <ADDRESS>
+          Listen address [default: 0.0.0.0:8000]
+      --mcp
+          Enable MCP protocol support; mutually exclusive with only_mcp
+      --only-mcp
+          Enable the MCP protocol only, without the regular routes; mutually exclusive with mcp
+      --ocr
+          Enable content recognition; mutually exclusive with old
+      --old
+          Enable content recognition with the legacy model; mutually exclusive with ocr
+      --det
+          Enable object detection
+      --slide
+          Enable slider and gap recognition
+      --ocr-charset-range <OCR_CHARSET_RANGE>
+          Global default charset for probability-based recognition. If the API does not provide a charset, this value is used. Values 0~7 select a built-in charset; any other value is a custom charset, e.g. "0123456789+-x/=". If unset, the full charset is used without restriction
+      --ocr-path <OCR_PATH>
+          Path to the content recognition model and its charset. If the inline-model feature is enabled (the default), you can ignore this option unless you want a custom model. The model and charset paths must share the same base name, e.g. `model/stock_common.onnx` + `model/stock_common.json` [default: model/stock_common.onnx]
+      --det-path <DET_PATH>
+          Path to the object detection model. If the inline-model feature is enabled (the default), you can ignore this option unless you want a custom model [default: model/stock_det.onnx]
+      --acme <ACME>
+          Provide your domain to automatically obtain an SSL certificate, i.e. HTTPS support
+      --max-concurrency <MAX_CONCURRENCY>
+          Maximum number of concurrent ONNX inference tasks, defaults to the number of CPU cores. 0 means unlimited [default: 0]
+      --rate-limit <RATE_LIMIT>
+          Allowed requests per IP per 10 seconds; 0 means unlimited [default: 0]
+      --api-key <API_KEY>
+          Optional API key; when set, all REST / MCP requests must carry an `Authorization: Bearer <key>` or `x-api-key: <key>` header
+      --num-threads <NUM_THREADS>
+          ORT `IntraOpNumThreads` (threads used per inference); 0 uses the ORT default [default: 0]
+      --config <CONFIG>
+          Optional TOML config file; can set model paths / charset / thread count, etc. Command-line arguments take precedence
+      --manifest <MANIFEST>
+          Optional model manifest file (`model/models.json`); loads rec / det models from the manifest, so any ONNX model can be plugged in without code changes. Takes precedence over --ocr-path / --det-path
+      --profile <PROFILE>
+          Named profile in the model manifest (the `profiles` field of `model/models.json`), e.g. fast / balanced / accurate. Must be used together with --manifest
+      --rec-model <REC_MODEL>
+          Select a rec model by name from the manifest (defaults to the first rec entry), e.g. --rec-model ft-small. Takes precedence over --profile
+      --det-model <DET_MODEL>
+          Select a det model by name from the manifest (defaults to the first det entry), e.g. --det-model ppocrv6-tiny-det
+  -h, --help
+          Print help
 ```
 
 ## Docker
