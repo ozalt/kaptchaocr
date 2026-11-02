@@ -3,7 +3,7 @@
 Prerequisites:
     pip install playwright && playwright install chromium
     # captcha server with both features:
-    # ./kaptchowmin --ocr --det --manifest model/models.json --profile balanced
+    # ./kaptchaocr --ocr --det --manifest model/models.json --profile balanced
 
 Flow: read the prompt text from the page, solve the captcha image, map the
 returned image coordinates onto the (possibly scaled) element and click.
@@ -11,7 +11,7 @@ returned image coordinates onto the (possibly scaled) element and click.
 
 from playwright.sync_api import sync_playwright
 
-from captchowmin import Client
+from kaptchaocr import Client
 
 URL = "https://example.com/login"
 CAPTCHA_IMAGE = "#captcha-img"     # the image the points are relative to

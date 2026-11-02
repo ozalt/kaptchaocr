@@ -45,8 +45,8 @@ def slide_match(target_path, background_path, algorithm="match", endpoint="http:
             print(f"Error: {result.get('msg', 'Unknown error')}", file=sys.stderr)
             sys.exit(1)
     except requests.exceptions.RequestException as e:
-        print(f"Error: Failed to connect to kaptchowmin service: {e}", file=sys.stderr)
-        print(f"Make sure the service is running: python scripts/start_kaptchowmin.py", file=sys.stderr)
+        print(f"Error: Failed to connect to kaptchaocr service: {e}", file=sys.stderr)
+        print(f"Make sure the service is running: python scripts/start_kaptchaocr.py", file=sys.stderr)
         sys.exit(1)
 
 
@@ -87,13 +87,13 @@ def slide_comparison(target_path, background_path, endpoint="http://127.0.0.1:80
             print(f"Error: {result.get('msg', 'Unknown error')}", file=sys.stderr)
             sys.exit(1)
     except requests.exceptions.RequestException as e:
-        print(f"Error: Failed to connect to kaptchowmin service: {e}", file=sys.stderr)
-        print(f"Make sure the service is running: python scripts/start_kaptchowmin.py", file=sys.stderr)
+        print(f"Error: Failed to connect to kaptchaocr service: {e}", file=sys.stderr)
+        print(f"Make sure the service is running: python scripts/start_kaptchaocr.py", file=sys.stderr)
         sys.exit(1)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Slide matching using kaptchowmin service")
+    parser = argparse.ArgumentParser(description="Slide matching using kaptchaocr service")
     parser.add_argument("target_path", help="Path to the target/slide image")
     parser.add_argument("background_path", help="Path to the background image")
     parser.add_argument("--algorithm", choices=["match", "comparison"], default="match", help="Algorithm to use (match or comparison)")

@@ -1,6 +1,6 @@
-# KAPTCHOWMIN API Reference
+# KAPTCHAOCR API Reference
 
-This document describes the REST API endpoints available in the kaptchowmin server.
+This document describes the REST API endpoints available in the kaptchaocr server.
 
 ## Base URL
 
@@ -12,7 +12,7 @@ http://127.0.0.1:8000
 
 ### 1. `/status` - Service Status
 
-Get the current status of the kaptchowmin service.
+Get the current status of the kaptchaocr service.
 
 **Method:** `GET`
 

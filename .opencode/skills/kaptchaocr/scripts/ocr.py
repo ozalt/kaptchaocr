@@ -37,13 +37,13 @@ def ocr_recognition(image_path, endpoint="http://127.0.0.1:8000/ocr", color_filt
             print(f"Error: {result.get('msg', 'Unknown error')}", file=sys.stderr)
             sys.exit(1)
     except requests.exceptions.RequestException as e:
-        print(f"Error: Failed to connect to kaptchowmin service: {e}", file=sys.stderr)
-        print(f"Make sure the service is running: python scripts/start_kaptchowmin.py", file=sys.stderr)
+        print(f"Error: Failed to connect to kaptchaocr service: {e}", file=sys.stderr)
+        print(f"Make sure the service is running: python scripts/start_kaptchaocr.py", file=sys.stderr)
         sys.exit(1)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="OCR recognition using kaptchowmin service")
+    parser = argparse.ArgumentParser(description="OCR recognition using kaptchaocr service")
     parser.add_argument("image_path", help="Path to the image file")
     parser.add_argument("--color-filter", help="Color filter to apply (red, blue, green, yellow, orange, purple, cyan, black, white, gray)")
     parser.add_argument("--charset-range", help="Character range for recognition (0-7 or custom string)")

@@ -3,7 +3,7 @@
 Prerequisites:
     pip install playwright && playwright install chromium
     # captcha server with the fine-tuned model:
-    # ./kaptchowmin --ocr --manifest model/models.json --profile balanced
+    # ./kaptchaocr --ocr --manifest model/models.json --profile balanced
 
 Adapt the selectors and the success condition to the target site, and keep
 requests polite: one attempt per fresh captcha image, no hammering.
@@ -11,7 +11,7 @@ requests polite: one attempt per fresh captcha image, no hammering.
 
 from playwright.sync_api import sync_playwright
 
-from captchowmin import Client, ServerError
+from kaptchaocr import Client, ServerError
 
 URL = "https://example.com/login"
 CAPTCHA_IMAGE = "#captcha-img"

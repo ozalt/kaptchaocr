@@ -6,7 +6,7 @@
 //! unknown (`?`).
 //!
 //! ```
-//! use kaptchowmin::math::solve;
+//! use kaptchaocr::math::solve;
 //!
 //! assert_eq!(solve("5+?=8").unwrap().answer, "3");
 //! assert_eq!(solve("９÷３＝").unwrap().answer, "3");

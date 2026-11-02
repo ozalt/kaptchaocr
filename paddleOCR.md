@@ -3,7 +3,7 @@
 > Status: **REFERENCE ONLY** (2026-08-12). Nothing here is wired into the
 > inference pipeline yet. It documents the PP-OCRv6 model family we plan to
 > use, what each model needs to run (I/O, preprocessing, postprocessing), and
-> how it maps onto the existing `kaptchowmin` pipeline. Integration is Phase 3 /
+> how it maps onto the existing `kaptchaocr` pipeline. Integration is Phase 3 /
 > Phase 4 work; empirical-verification items are flagged `[verify]`.
 
 ## 1. TL;DR — what models do we need
@@ -18,7 +18,7 @@ We are going to use **all six** PP-OCRv6 ONNX exports, covering every tier:
 
 - **Recognition** (`text_recognition` / CTC word model): `x` [N,3,48,W_dyn] → `fetch_name_0` [N,T,classes].
 - **Detection** (`text_detection` / DB detector): `x` [N,3,H_dyn,W_dyn] → `fetch_name_0` [N,1,H_r,W_r] probability map.
-- Only the **ONNX** repos matter for `kaptchowmin` (ONNX Runtime). The plain Paddle and `.safetensors` repos use different runtimes (see §4).
+- Only the **ONNX** repos matter for `kaptchaocr` (ONNX Runtime). The plain Paddle and `.safetensors` repos use different runtimes (see §4).
 
 These replace/complement the stock bundled models today:
 - `model/stock_common.onnx` / `stock_old.onnx` — rec, height 32, channel 3, small vocab.
@@ -111,7 +111,7 @@ Inference-essential steps:
 The full character dict (49 languages: ASCII, Latin-1/Latin-ext, Greek,
 Cyrillic, currency, CJK ~6.7k hanzi, Japanese kana, punctuation, emoji for
 small/medium) is embedded in `inference.yml` → `PostProcess.character_dict`.
-For `kaptchowmin` this becomes the `Charset` JSON's `charset` list. Small/medium
+For `kaptchaocr` this becomes the `Charset` JSON's `charset` list. Small/medium
 share one 18,708-char dict; tiny has a 6,904-char dict.
 
 ## 5. Detection model — how it works
@@ -155,7 +155,7 @@ contours → unclip polygons by `unclip_ratio` → score boxes with
 `box_thresh` → (optionally NMS). This is the standard DB (Differentiable
 Binarization) postprocess.
 
-## 6. How this maps to the existing `kaptchowmin` pipeline
+## 6. How this maps to the existing `kaptchaocr` pipeline
 
 ### 6.1 Recognition — close fit, small deltas
 

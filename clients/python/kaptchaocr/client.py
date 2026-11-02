@@ -1,4 +1,4 @@
-"""Synchronous, zero-dependency HTTP client for the Kaptchowmin captcha API server.
+"""Synchronous, zero-dependency HTTP client for the KaptchaOCR captcha API server.
 
 Only the Python standard library is used, so the client can be vendored into
 scraper projects without additional dependencies.
@@ -94,7 +94,7 @@ def _retry_after_seconds(headers: Optional[Dict[str, str]]) -> Optional[float]:
 
 
 class Client:
-    """Synchronous client for one Kaptchowmin server.
+    """Synchronous client for one KaptchaOCR server.
 
     :param base_url: server address, e.g. ``http://127.0.0.1:8000``.
     :param api_key: optional key sent as ``x-api-key``.

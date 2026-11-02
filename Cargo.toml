@@ -1,9 +1,9 @@
 [package]
-name = "kaptchowmin"
+name = "kaptchaocr"
 version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
-description = "Kaptchowmin — a CAPTCHA OCR/detection/slide-matching library and API server"
+description = "KaptchaOCR — a CAPTCHA OCR/detection/slide-matching library and API server"
 
 [features]
 default = ["inline-model", "download-binaries"]

@@ -31,13 +31,13 @@ def detection(image_path, endpoint="http://127.0.0.1:8000/det"):
             print(f"Error: {result.get('msg', 'Unknown error')}", file=sys.stderr)
             sys.exit(1)
     except requests.exceptions.RequestException as e:
-        print(f"Error: Failed to connect to kaptchowmin service: {e}", file=sys.stderr)
-        print(f"Make sure the service is running: python scripts/start_kaptchowmin.py", file=sys.stderr)
+        print(f"Error: Failed to connect to kaptchaocr service: {e}", file=sys.stderr)
+        print(f"Make sure the service is running: python scripts/start_kaptchaocr.py", file=sys.stderr)
         sys.exit(1)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Object detection using kaptchowmin service")
+    parser = argparse.ArgumentParser(description="Object detection using kaptchaocr service")
     parser.add_argument("image_path", help="Path to the image file")
     parser.add_argument("--endpoint", default="http://127.0.0.1:8000/det", help="Detection endpoint URL")
     parser.add_argument("--json", action="store_true", help="Output as raw JSON")

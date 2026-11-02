@@ -1,4 +1,4 @@
-"""Offline tests for the captchowmin client (fake transport, no server)."""
+"""Offline tests for the kaptchaocr client (fake transport, no server)."""
 
 import base64
 import json
@@ -9,8 +9,8 @@ from types import SimpleNamespace
 from unittest import mock
 from urllib.error import URLError
 
-from captchowmin import Client, NetworkError, ServerError
-from captchowmin.client import TransportResponse
+from kaptchaocr import Client, NetworkError, ServerError
+from kaptchaocr.client import TransportResponse
 
 
 class FakeTransport:
@@ -272,7 +272,7 @@ class ErrorTest(unittest.TestCase):
             {"text": "ok"},
         )
 
-        with mock.patch("captchowmin.client.time.sleep") as sleep:
+        with mock.patch("kaptchaocr.client.time.sleep") as sleep:
             result = client.solve(b"a")
 
         self.assertEqual(result.text, "ok")
@@ -285,7 +285,7 @@ class ErrorTest(unittest.TestCase):
             {"text": "ok"},
         )
 
-        with mock.patch("captchowmin.client.time.sleep") as sleep:
+        with mock.patch("kaptchaocr.client.time.sleep") as sleep:
             client.solve(b"a")
 
         sleep.assert_called_once_with(1.5)
@@ -294,7 +294,7 @@ class ErrorTest(unittest.TestCase):
     def test_network_error_after_retries(self):
         client, transport = make_client(URLError("down"), URLError("down"), URLError("down"))
 
-        with mock.patch("captchowmin.client.time.sleep"):
+        with mock.patch("kaptchaocr.client.time.sleep"):
             with self.assertRaises(NetworkError):
                 client.solve(b"a")
 

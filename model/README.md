@@ -8,7 +8,7 @@ Directory layout:
 | `stock_old.onnx` + `stock_old.json` | Stock "old" recognition model (INT8-quantized variant). |
 | `stock_det.onnx` | Stock detection model (custom YOLOv5-style, 416×416, anchor grid). |
 | `ppocrv6/` | PP-OCRv6 ONNX exports (tiny/small/medium × rec/det). **Gitignored** — re-download from HuggingFace, see `paddleOCR.md` §3. |
-| `finetuned/` | Captcha-fine-tuned PP-OCRv6 ONNX: rec (tiny/small/medium) + charsets, and `{small,medium}_det.onnx` (glyph-level detectors for click captchas, manifest entries `ft-small-det` / `ft-medium-det`). Use the tier's `ppocrv6/<tier>_rec.json` charset (blank at index 0); training artifacts live in `../captchowmin-rnd/model-training/`. |
+| `finetuned/` | Captcha-fine-tuned PP-OCRv6 ONNX: rec (tiny/small/medium) + charsets, and `{small,medium}_det.onnx` (glyph-level detectors for click captchas, manifest entries `ft-small-det` / `ft-medium-det`). Use the tier's `ppocrv6/<tier>_rec.json` charset (blank at index 0); training artifacts are kept in the private training workspace. |
 | `models.json` | Model manifest consumed by the server (`--manifest`) and the eval harness. Lets you wire arbitrary ONNX rec/det models without rebuilding. |
 
 Full reference on the PP-OCRv6 family (I/O, preprocessing, dicts) is in
@@ -105,8 +105,7 @@ above. Two gotchas learned from the shipped fine-tunes (rec:
   `inference.pdiparams`.
 - **Flush subnormals**: zero any float weight `< 1.175e-38` after conversion
   (ORT convs can run ~6× slower otherwise; the det fine-tune had 541k such
-  values). Full recipe:
-  `../captchowmin-rnd/dataset-curation-det/convert_det_onnx.sh`.
+  values). The full recipe is kept in the private training workspace.
 
 ---
 

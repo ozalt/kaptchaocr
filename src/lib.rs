@@ -1,4 +1,4 @@
-//! # kaptchowmin — CAPTCHA OCR
+//! # kaptchaocr — CAPTCHA OCR
 //!
 //! Library + API server. This file is the library core; see the [`manifest`] module for the model manifest.
 
@@ -9,8 +9,8 @@ pub mod trajectory;
 
 /// Initialize content recognition.
 #[cfg(feature = "inline-model")]
-pub fn kaptchowmin_classification() -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new(
+pub fn kaptchaocr_classification() -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new(
         include_bytes!("../model/stock_common.onnx"),
         serde_json::from_str(include_str!("../model/stock_common.json")).unwrap(),
     )
@@ -18,10 +18,10 @@ pub fn kaptchowmin_classification() -> anyhow::Result<Kaptchowmin<'static>> {
 
 /// Initialize content recognition and set the ORT `IntraOpNumThreads`.
 #[cfg(feature = "inline-model")]
-pub fn kaptchowmin_classification_with_num_threads(
+pub fn kaptchaocr_classification_with_num_threads(
     num_threads: usize,
-) -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new_with_num_threads(
+) -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new_with_num_threads(
         include_bytes!("../model/stock_common.onnx"),
         serde_json::from_str(include_str!("../model/stock_common.json")).unwrap(),
         num_threads,
@@ -30,8 +30,8 @@ pub fn kaptchowmin_classification_with_num_threads(
 
 /// Initialize content recognition.
 #[cfg(not(feature = "inline-model"))]
-pub fn kaptchowmin_classification() -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new(
+pub fn kaptchaocr_classification() -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new(
         std::fs::read("model/stock_common.onnx")?,
         serde_json::from_str(&std::fs::read_to_string("model/stock_common.json")?)?,
     )
@@ -39,8 +39,8 @@ pub fn kaptchowmin_classification() -> anyhow::Result<Kaptchowmin<'static>> {
 
 /// Initialize content recognition.
 #[cfg(feature = "cuda")]
-pub fn kaptchowmin_classification_cuda(device_id: i32) -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new_cuda(
+pub fn kaptchaocr_classification_cuda(device_id: i32) -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new_cuda(
         include_bytes!("../model/stock_common.onnx"),
         serde_json::from_str(include_str!("../model/stock_common.json")).unwrap(),
         device_id,
@@ -49,8 +49,8 @@ pub fn kaptchowmin_classification_cuda(device_id: i32) -> anyhow::Result<Kaptcho
 
 /// Initialize content recognition with the legacy model.
 #[cfg(feature = "inline-model")]
-pub fn kaptchowmin_classification_old() -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new(
+pub fn kaptchaocr_classification_old() -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new(
         include_bytes!("../model/stock_old.onnx"),
         serde_json::from_str(include_str!("../model/stock_old.json")).unwrap(),
     )
@@ -58,10 +58,10 @@ pub fn kaptchowmin_classification_old() -> anyhow::Result<Kaptchowmin<'static>> 
 
 /// Initialize content recognition with the legacy model and set the ORT `IntraOpNumThreads`.
 #[cfg(feature = "inline-model")]
-pub fn kaptchowmin_classification_old_with_num_threads(
+pub fn kaptchaocr_classification_old_with_num_threads(
     num_threads: usize,
-) -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new_with_num_threads(
+) -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new_with_num_threads(
         include_bytes!("../model/stock_old.onnx"),
         serde_json::from_str(include_str!("../model/stock_old.json")).unwrap(),
         num_threads,
@@ -70,8 +70,8 @@ pub fn kaptchowmin_classification_old_with_num_threads(
 
 /// Initialize content recognition with the legacy model.
 #[cfg(not(feature = "inline-model"))]
-pub fn kaptchowmin_classification_old() -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new(
+pub fn kaptchaocr_classification_old() -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new(
         std::fs::read("model/stock_old.onnx")?,
         serde_json::from_str(&std::fs::read_to_string("model/stock_old.json")?)?,
     )
@@ -79,8 +79,8 @@ pub fn kaptchowmin_classification_old() -> anyhow::Result<Kaptchowmin<'static>> 
 
 /// Initialize content recognition with the legacy model.
 #[cfg(feature = "cuda")]
-pub fn kaptchowmin_classification_old_cuda(device_id: i32) -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new_cuda(
+pub fn kaptchaocr_classification_old_cuda(device_id: i32) -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new_cuda(
         include_bytes!("../model/stock_old.onnx"),
         serde_json::from_str(include_str!("../model/stock_old.json")).unwrap(),
         device_id,
@@ -89,28 +89,28 @@ pub fn kaptchowmin_classification_old_cuda(device_id: i32) -> anyhow::Result<Kap
 
 /// Initialize object detection.
 #[cfg(feature = "inline-model")]
-pub fn kaptchowmin_detection() -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new_model(include_bytes!("../model/stock_det.onnx"))
+pub fn kaptchaocr_detection() -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new_model(include_bytes!("../model/stock_det.onnx"))
 }
 
 /// Initialize object detection and set the ORT `IntraOpNumThreads`.
 #[cfg(feature = "inline-model")]
-pub fn kaptchowmin_detection_with_num_threads(
+pub fn kaptchaocr_detection_with_num_threads(
     num_threads: usize,
-) -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new_model_with_num_threads(include_bytes!("../model/stock_det.onnx"), num_threads)
+) -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new_model_with_num_threads(include_bytes!("../model/stock_det.onnx"), num_threads)
 }
 
 /// Initialize object detection.
 #[cfg(not(feature = "inline-model"))]
-pub fn kaptchowmin_detection() -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new_model(std::fs::read("model/stock_det.onnx")?)
+pub fn kaptchaocr_detection() -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new_model(std::fs::read("model/stock_det.onnx")?)
 }
 
 /// Initialize object detection.
 #[cfg(feature = "cuda")]
-pub fn kaptchowmin_detection_cuda(device_id: i32) -> anyhow::Result<Kaptchowmin<'static>> {
-    Kaptchowmin::new_model_cuda(include_bytes!("../model/stock_det.onnx"), device_id)
+pub fn kaptchaocr_detection_cuda(device_id: i32) -> anyhow::Result<KaptchaOcr<'static>> {
+    KaptchaOcr::new_model_cuda(include_bytes!("../model/stock_det.onnx"), device_id)
 }
 
 /// Slider matching.
@@ -641,7 +641,7 @@ const STRIDES: [u32; 3] = [8, 16, 32];
 /// Output decoding type of the object detection model.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum DetType {
-    /// Anchor-grid decoding (YOLOv5 style, kaptchowmin's bundled `stock_det`).
+    /// Anchor-grid decoding (YOLOv5 style, kaptchaocr's bundled `stock_det`).
     #[default]
     Yolo,
     /// DB (Differentiable Binarization) probability-map decoding (PaddleOCR family).
@@ -1357,7 +1357,7 @@ fn average_max_confidence(probability: &[Vec<f32>]) -> f64 {
 }
 
 #[derive(Debug)]
-pub struct Kaptchowmin<'a> {
+pub struct KaptchaOcr<'a> {
     diy: bool,
     session: ort::Session,
     charset: Option<std::borrow::Cow<'a, Charset>>,
@@ -1366,8 +1366,8 @@ pub struct Kaptchowmin<'a> {
     db_params: DbParams,
 }
 
-unsafe impl<'a> Send for Kaptchowmin<'a> {}
-unsafe impl<'a> Sync for Kaptchowmin<'a> {}
+unsafe impl<'a> Send for KaptchaOcr<'a> {}
+unsafe impl<'a> Sync for KaptchaOcr<'a> {}
 
 /// Build an ORT session, optionally setting `IntraOpNumThreads`.
 fn build_session<MODEL>(model: MODEL, num_threads: Option<usize>) -> anyhow::Result<ort::Session>
@@ -1385,7 +1385,7 @@ where
 }
 
 /// Bundled models and custom models take different parameters, so creating a model automatically detects whether it is a custom model.
-impl<'a> Kaptchowmin<'a> {
+impl<'a> KaptchaOcr<'a> {
     /// Set the runtime library path.
     ///
     /// - Unix: `/etc/.../libonnxruntime.so`
@@ -3010,12 +3010,12 @@ mod tests {
 
     #[test]
     fn classification_probability() {
-        let mut kaptchowmin = kaptchowmin_classification().unwrap();
+        let mut kaptchaocr = kaptchaocr_classification().unwrap();
 
         // CharsetRange::LowercaseUppercase: uppercase and lowercase letters
-        kaptchowmin.set_ranges(3);
+        kaptchaocr.set_ranges(3);
 
-        let mut result = kaptchowmin
+        let mut result = kaptchaocr
             .classification_probability(read_image("image/3.png"))
             .unwrap();
 
@@ -3028,18 +3028,18 @@ mod tests {
 
     #[test]
     fn classification_filter() {
-        let kaptchowmin = kaptchowmin_classification().unwrap();
+        let kaptchaocr = kaptchaocr_classification().unwrap();
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification_with_filter(read_image("image/4.png"), "green")
                 .unwrap()
         );
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification_with_filter(
                     read_image("image/4.png"),
                     [((40, 50, 50), (80, 255, 255))]
@@ -3050,39 +3050,39 @@ mod tests {
 
     #[test]
     fn classification() {
-        let kaptchowmin = kaptchowmin_classification().unwrap();
+        let kaptchaocr = kaptchaocr_classification().unwrap();
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/1.png"))
                 .unwrap()
         );
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/2.png"))
                 .unwrap()
         );
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/3.png"))
                 .unwrap()
         );
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/4.png"))
                 .unwrap()
         );
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/su.png"))
                 .unwrap()
         );
@@ -3090,32 +3090,32 @@ mod tests {
 
     #[test]
     fn classification_old() {
-        let kaptchowmin = kaptchowmin_classification_old().unwrap();
+        let kaptchaocr = kaptchaocr_classification_old().unwrap();
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/1.png"))
                 .unwrap()
         );
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/2.png"))
                 .unwrap()
         );
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/3.png"))
                 .unwrap()
         );
 
         println!(
             "{}",
-            kaptchowmin
+            kaptchaocr
                 .classification(read_image("image/4.png"))
                 .unwrap()
         );
@@ -3124,19 +3124,19 @@ mod tests {
     #[test]
     fn classification_bbox() {
         let input = read_image("image/6.jpg");
-        let kaptchowmin = kaptchowmin_detection().unwrap();
-        let result = kaptchowmin.detection(input.clone()).unwrap();
-        let kaptchowmin = kaptchowmin_classification().unwrap();
-        let result = kaptchowmin.classification_bbox(input, &result).unwrap();
+        let kaptchaocr = kaptchaocr_detection().unwrap();
+        let result = kaptchaocr.detection(input.clone()).unwrap();
+        let kaptchaocr = kaptchaocr_classification().unwrap();
+        let result = kaptchaocr.classification_bbox(input, &result).unwrap();
 
         println!("{:?}", result);
     }
 
     #[test]
     fn detection() {
-        let kaptchowmin = kaptchowmin_detection().unwrap();
+        let kaptchaocr = kaptchaocr_detection().unwrap();
         let input = read_image("image/5.jpg");
-        let result = kaptchowmin.detection(input.clone()).unwrap();
+        let result = kaptchaocr.detection(input.clone()).unwrap();
 
         println!("{:?}", result);
 
@@ -3164,7 +3164,7 @@ mod tests {
         image.save("./output1.jpg").unwrap();
 
         let input = read_image("image/6.jpg");
-        let result = kaptchowmin.detection(input.clone()).unwrap();
+        let result = kaptchaocr.detection(input.clone()).unwrap();
 
         println!("{:?}", result);
 
@@ -3232,10 +3232,10 @@ mod tests {
     #[test]
     fn classification_no_charset_returns_error() {
         // calling classification on a session without a charset should return an error, not panic
-        let mut kaptchowmin = kaptchowmin_classification().unwrap();
-        kaptchowmin.charset = None;
+        let mut kaptchaocr = kaptchaocr_classification().unwrap();
+        kaptchaocr.charset = None;
 
-        let result = kaptchowmin.classification(read_image("image/1.png"));
+        let result = kaptchaocr.classification(read_image("image/1.png"));
         assert!(result.is_err());
         assert!(result
             .unwrap_err()
@@ -3428,15 +3428,15 @@ mod tests {
             &std::fs::read_to_string("model/finetuned/small_rec.json").unwrap(),
         )
         .unwrap();
-        let kaptchowmin = Kaptchowmin::new(model, charset).unwrap();
+        let kaptchaocr = KaptchaOcr::new(model, charset).unwrap();
         let image = || read_image("image/3.png");
 
         // regular recognition without a range (CTC greedy)
-        let baseline = kaptchowmin.classification(image()).unwrap();
+        let baseline = kaptchaocr.classification(image()).unwrap();
         assert!(!baseline.is_empty());
 
         // restricted to the baseline's charset: restricted decoding should match unrestricted decoding exactly
-        let mut result = kaptchowmin
+        let mut result = kaptchaocr
             .classification_probability_with_ranges(image(), CharsetRange::Other(baseline.clone()))
             .unwrap();
         assert_eq!(result.get_text(), baseline);
@@ -3459,7 +3459,7 @@ mod tests {
         // after removing the baseline's first character, it must not appear in the decoded result
         let removed = baseline.chars().next().unwrap();
         let filtered: String = baseline.chars().filter(|&c| c != removed).collect();
-        let mut result = kaptchowmin
+        let mut result = kaptchaocr
             .classification_probability_with_ranges(image(), CharsetRange::Other(filtered.clone()))
             .unwrap();
         let text = result.get_text().to_string();
@@ -3467,13 +3467,13 @@ mod tests {
         assert!(text.chars().all(|c| filtered.contains(c)));
 
         // without a range, word models return a clear error rather than a wrong result
-        let err = kaptchowmin.classification_probability(image()).unwrap_err();
+        let err = kaptchaocr.classification_probability(image()).unwrap_err();
         assert!(err.to_string().contains("charset_range"));
     }
 
-    fn test_ocr() -> Kaptchowmin<'static> {
-        let mut kaptchowmin = kaptchowmin_classification().unwrap();
-        kaptchowmin.charset = Some(std::borrow::Cow::Owned(Charset {
+    fn test_ocr() -> KaptchaOcr<'static> {
+        let mut kaptchaocr = kaptchaocr_classification().unwrap();
+        kaptchaocr.charset = Some(std::borrow::Cow::Owned(Charset {
             word: false,
             image: [-1, 32],
             channel: 1,
@@ -3482,14 +3482,14 @@ mod tests {
             std: None,
             bgr: None,
         }));
-        kaptchowmin
+        kaptchaocr
     }
 
     #[test]
     fn preprocess_channel1_shape_and_normalize() {
         // 1 channel: output (1, 1, H, W), normalization (x/255-0.5)/0.5
-        let mut kaptchowmin = test_ocr();
-        kaptchowmin.charset = Some(std::borrow::Cow::Owned(Charset {
+        let mut kaptchaocr = test_ocr();
+        kaptchaocr.charset = Some(std::borrow::Cow::Owned(Charset {
             word: false,
             image: [4, 4],
             channel: 1,
@@ -3505,7 +3505,7 @@ mod tests {
             image::Rgb([128, 128, 128]),
         ));
 
-        let tensor = kaptchowmin
+        let tensor = kaptchaocr
             .preprocess(image, false, &PreprocessOptions::default())
             .unwrap();
 
@@ -3520,8 +3520,8 @@ mod tests {
         rgb.put_pixel(0, 0, image::Rgb([10, 20, 30]));
         rgb.put_pixel(1, 0, image::Rgb([40, 50, 60]));
 
-        let mut kaptchowmin = test_ocr();
-        kaptchowmin.charset = Some(std::borrow::Cow::Owned(Charset {
+        let mut kaptchaocr = test_ocr();
+        kaptchaocr.charset = Some(std::borrow::Cow::Owned(Charset {
             word: false,
             image: [2, 1],
             channel: 3,
@@ -3531,7 +3531,7 @@ mod tests {
             bgr: None,
         }));
 
-        let tensor = kaptchowmin
+        let tensor = kaptchaocr
             .preprocess(
                 image::DynamicImage::ImageRgb8(rgb),
                 false,
@@ -3557,8 +3557,8 @@ mod tests {
         let mut rgba = image::RgbaImage::new(1, 1);
         rgba.put_pixel(0, 0, image::Rgba([0, 0, 0, 0]));
 
-        let mut kaptchowmin = test_ocr();
-        kaptchowmin.charset = Some(std::borrow::Cow::Owned(Charset {
+        let mut kaptchaocr = test_ocr();
+        kaptchaocr.charset = Some(std::borrow::Cow::Owned(Charset {
             word: false,
             image: [1, 1],
             channel: 3,
@@ -3568,7 +3568,7 @@ mod tests {
             bgr: None,
         }));
 
-        let tensor = kaptchowmin
+        let tensor = kaptchaocr
             .preprocess(
                 image::DynamicImage::ImageRgba8(rgba),
                 true,
@@ -3586,15 +3586,15 @@ mod tests {
     #[test]
     fn preprocess_options_denoise_binarize_deskew() {
         // preprocessing options run through and the output shape matches the model config
-        let kaptchowmin = test_ocr();
+        let kaptchaocr = test_ocr();
         let image = image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
             64,
             64,
             image::Rgb([200, 200, 200]),
         ));
 
-        let mut kaptchowmin = kaptchowmin;
-        kaptchowmin.charset = Some(std::borrow::Cow::Owned(Charset {
+        let mut kaptchaocr = kaptchaocr;
+        kaptchaocr.charset = Some(std::borrow::Cow::Owned(Charset {
             word: false,
             image: [64, 64],
             channel: 1,
@@ -3611,17 +3611,17 @@ mod tests {
             resize: ResizeStrategy::Auto,
         };
 
-        let tensor = kaptchowmin.preprocess(image, false, &options).unwrap();
+        let tensor = kaptchaocr.preprocess(image, false, &options).unwrap();
         assert_eq!(tensor.shape(), &[1, 1, 64, 64]);
     }
 
     #[test]
     fn detection_with_options_returns_scores() {
-        let kaptchowmin = kaptchowmin_detection().unwrap();
+        let kaptchaocr = kaptchaocr_detection().unwrap();
         let input = read_image("image/5.jpg");
 
-        let with_score = kaptchowmin.detection_with_score(input.clone()).unwrap();
-        let plain = kaptchowmin.detection(input).unwrap();
+        let with_score = kaptchaocr.detection_with_score(input.clone()).unwrap();
+        let plain = kaptchaocr.detection(input).unwrap();
 
         assert_eq!(with_score.len(), plain.len());
         assert!(with_score.iter().all(|(_, s)| s.is_finite() && *s >= 0.0));
@@ -3630,15 +3630,13 @@ mod tests {
 
     #[test]
     fn detection_thresholds_change_recall() {
-        let kaptchowmin = kaptchowmin_detection().unwrap();
+        let kaptchaocr = kaptchaocr_detection().unwrap();
         let input = read_image("image/5.jpg");
 
-        let loose = kaptchowmin
+        let loose = kaptchaocr
             .detection_with_options(input.clone(), 0.45, 0.001)
             .unwrap();
-        let strict = kaptchowmin
-            .detection_with_options(input, 0.45, 0.9)
-            .unwrap();
+        let strict = kaptchaocr.detection_with_options(input, 0.45, 0.9).unwrap();
 
         assert!(loose.len() >= strict.len());
     }

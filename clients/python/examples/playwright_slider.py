@@ -3,7 +3,7 @@
 Prerequisites:
     pip install playwright && playwright install chromium
     # captcha server started with --slide:
-    # ./kaptchowmin --slide --manifest model/models.json --profile balanced
+    # ./kaptchaocr --slide --manifest model/models.json --profile balanced
 
 The server returns trajectory points as deltas from the handle start, sampled
 at ~60 Hz; replay them with small waits so the movement is time-consistent.
@@ -11,7 +11,7 @@ at ~60 Hz; replay them with small waits so the movement is time-consistent.
 
 from playwright.sync_api import sync_playwright
 
-from captchowmin import Client
+from kaptchaocr import Client
 
 URL = "https://example.com/login"
 HANDLE = ".slider-handle"      # the draggable piece

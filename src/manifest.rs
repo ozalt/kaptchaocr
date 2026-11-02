@@ -3,7 +3,7 @@
 //!
 //! See `model/models.json` at the repository root for examples.
 //! Model and charset paths are relative to the process working directory.
-use crate::{Charset, DbParams, DetType, Kaptchowmin};
+use crate::{Charset, DbParams, DetType, KaptchaOcr};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -90,7 +90,7 @@ impl ModelManifest {
 
 impl ManifestModel {
     /// Build a model instance from this manifest entry.
-    pub fn build(&self) -> anyhow::Result<Kaptchowmin<'static>> {
+    pub fn build(&self) -> anyhow::Result<KaptchaOcr<'static>> {
         let bytes = std::fs::read(&self.path).map_err(|e| {
             anyhow::anyhow!("failed to read model {} ({}): {e}", self.path, self.name)
         })?;
@@ -108,10 +108,10 @@ impl ManifestModel {
                     )
                 })?;
                 let charset: Charset = serde_json::from_str(&charset_text)?;
-                Ok(Kaptchowmin::new(bytes, charset)?)
+                Ok(KaptchaOcr::new(bytes, charset)?)
             }
             "det" => {
-                let mut model = Kaptchowmin::new_model(bytes)?;
+                let mut model = KaptchaOcr::new_model(bytes)?;
                 let cfg = self.det.clone().unwrap_or_default();
                 model.set_det_type(match cfg.r#type.as_str() {
                     "db" => DetType::Db,

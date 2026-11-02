@@ -1,6 +1,6 @@
-# KAPTCHOWMIN MCP Protocol
+# KAPTCHAOCR MCP Protocol
 
-This document describes the Model Context Protocol (MCP) implementation in the kaptchowmin server.
+This document describes the Model Context Protocol (MCP) implementation in the kaptchaocr server.
 
 ## Endpoint
 
@@ -209,16 +209,16 @@ Call a tool.
 
 ## Configuration
 
-To enable MCP support, start the kaptchowmin server with the `--mcp` flag:
+To enable MCP support, start the kaptchaocr server with the `--mcp` flag:
 
 ```bash
-kaptchowmin --address 0.0.0.0:8000 --ocr --det --slide --mcp
+kaptchaocr --address 0.0.0.0:8000 --ocr --det --slide --mcp
 ```
 
 To run ONLY MCP (no REST API), use `--only-mcp`:
 
 ```bash
-kaptchowmin --address 0.0.0.0:8000 --ocr --det --slide --only-mcp
+kaptchaocr --address 0.0.0.0:8000 --ocr --det --slide --only-mcp
 ```
 
 ## Tool Descriptions

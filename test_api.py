@@ -138,7 +138,7 @@ def test_routes(
                     "protocolVersion": "2025-03-26",
                     "capabilities": {},
                     "clientInfo": {
-                        "name": "kaptchowmin",
+                        "name": "kaptchaocr",
                         "version": "1.0.0",
                     },
                 },

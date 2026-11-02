@@ -1,7 +1,7 @@
-# captchowmin Python client
+# KaptchaOCR Python client
 
 Zero-dependency (standard library only) synchronous client for a running
-[Kaptchowmin](../../README.md) API server.
+[KaptchaOCR](../../README.md) API server.
 
 ## Install
 
@@ -16,7 +16,7 @@ pip install -e clients/python
 ## Quickstart
 
 ```python
-from captchowmin import Client
+from kaptchaocr import Client
 
 client = Client("http://127.0.0.1:8000", timeout=10, retries=2)
 

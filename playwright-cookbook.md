@@ -1,8 +1,8 @@
-# Playwright Cookbook — captcha solving with kaptchowmin
+# Playwright Cookbook — captcha solving with kaptchaocr
 
 Practical recipes for driving login / registration forms with
 [Playwright](https://playwright.dev/python/) while the captcha work is
-delegated to a local kaptchowmin server.
+delegated to a local kaptchaocr server.
 
 All snippets use the zero-dependency Python client from `clients/python/`
 (`pip install clients/python`) and Playwright's sync API
@@ -14,7 +14,7 @@ Terminal 1 — the server:
 
 ```sh
 # all features, balanced fine-tuned recognition model (ft-small, ~80% exact)
-./kaptchowmin --address 127.0.0.1:8000 --ocr --det --slide \
+./kaptchaocr --address 127.0.0.1:8000 --ocr --det --slide \
     --manifest model/models.json --profile balanced
 ```
 
@@ -29,7 +29,7 @@ Which recognition model should I use?
 Terminal 2 — the browser part. Create the client once and reuse it:
 
 ```python
-from captchowmin import Client
+from kaptchaocr import Client
 
 client = Client("http://127.0.0.1:8000", timeout=10, retries=2)
 ```
@@ -149,7 +149,7 @@ for point in result.points:                     # coordinates relative to the im
 - **Recommended setup**: the fine-tuned glyph detector and recognizer, with
   the prompt as a charset constraint:
   ```
-  kaptchowmin --ocr --det --manifest model/models.json \
+  kaptchaocr --ocr --det --manifest model/models.json \
           --det-model ft-small-det --rec-model ft-small
   ```
   Detection F1@0.5 is **96.8%** on the synthetic click set (bundled
@@ -183,7 +183,7 @@ If there is no browser (plain `requests` / Scrapy), the flow is the same minus
 the DOM: fetch the captcha image bytes and call the client.
 
 ```python
-from captchowmin import Client
+from kaptchaocr import Client
 
 client = Client("http://127.0.0.1:8000")
 

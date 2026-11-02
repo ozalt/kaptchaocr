@@ -1,10 +1,10 @@
-# kaptchowmin — local convenience targets (Linux / macOS).
+# kaptchaocr — local convenience targets (Linux / macOS).
 #
 #   make run                    build (if needed) + start the server locally
 #   make run PROFILE=accurate   pick a model tier: fast | balanced | accurate
 #   make help                   list all targets
 
-BIN     := target/release/kaptchowmin
+BIN     := target/release/kaptchaocr
 PROFILE ?= balanced
 ADDR    ?= 127.0.0.1:8000
 
@@ -19,11 +19,11 @@ build: ## build the release binary (stock models embedded)
 run: build ## run the server locally (PROFILE=…, ADDR=host:port)
 	$(BIN) --address $(ADDR) --ocr --det --slide --manifest model/models.json --profile $(PROFILE)
 
-docker: ## build the Docker image (tag: kaptchowmin)
-	docker build -t kaptchowmin .
+docker: ## build the Docker image (tag: kaptchaocr)
+	docker build -t kaptchaocr .
 
 docker-run: ## run the Docker image (port 8000)
-	docker run --rm -p 8000:8000 kaptchowmin
+	docker run --rm -p 8000:8000 kaptchaocr
 
 test: ## run library tests (both feature configs)
 	cargo test --lib

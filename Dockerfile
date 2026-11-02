@@ -33,7 +33,7 @@ RUN apk add --no-cache ca-certificates libgcc libstdc++
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/kaptchowmin /usr/local/bin/kaptchowmin
+COPY --from=builder /app/target/release/kaptchaocr /usr/local/bin/kaptchaocr
 COPY --from=builder /app/model ./model
 COPY model/finetuned ./model/finetuned
 
@@ -42,7 +42,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
     CMD wget -qO- http://127.0.0.1:8000/healthz || exit 1
 
-ENTRYPOINT ["kaptchowmin"]
+ENTRYPOINT ["kaptchaocr"]
 # Default: all features, balanced fine-tuned recognition model (ft-small).
 CMD ["--address", "0.0.0.0:8000", "--ocr", "--det", "--slide", \
      "--manifest", "model/models.json", "--profile", "balanced"]

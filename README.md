@@ -1,6 +1,6 @@
 # Introduction
 
-Kaptchowmin is an easy-to-use, general-purpose CAPTCHA recognition library and
+KaptchaOCR is an easy-to-use, general-purpose CAPTCHA recognition library and
 API server written in Rust. It handles text/OCR recognition, glyph detection and
 slide matching, ships as a cross-platform static binary (no OpenCV dependency),
 and exposes both a REST API and an MCP endpoint.
@@ -37,6 +37,7 @@ and exposes both a REST API and an MCP endpoint.
     - [Tool Invocation Request](#tool-invocation-request)
     - [Tool Call Response](#tool-call-response)
 - [Difficult and complicated cases](#difficult-and-complicated-cases)
+- [Acknowledgements](#acknowledgements)
 
 # Environment Support
 
@@ -51,15 +52,15 @@ and exposes both a REST API and an MCP endpoint.
 
 # Installation steps
 
-`lib.rs` implements `kaptchowmin`.
+`lib.rs` implements `kaptchaocr`.
 
 `main.rs` implements the API server.
 
 `model` is the directory holding the models and character sets.
 
-Depend on this library `kaptchowmin = { path = "path/to/captchowmin" }`
+Depend on this library `kaptchaocr = { path = "path/to/kaptchaocr" }`
 
-Enable the `cuda` feature `kaptchowmin = { path = "path/to/captchowmin", features = ["cuda"] }`
+Enable the `cuda` feature `kaptchaocr = { path = "path/to/kaptchaocr", features = ["cuda"] }`
 
 Supports static and dynamic linking, uses static linking by default, and will automatically download the link library during construction. Please set up the proxy. The `cuda` feature does not support static linking (it will download the dynamic link library itself).
 
@@ -74,7 +75,7 @@ Mainly used to recognize single-line text, which occupies the main part of the i
 
 ```rust
 let image = std::fs::read("target.png").unwrap();
-let mut ocr = kaptchowmin::kaptchowmin_classification().unwrap();
+let mut ocr = kaptchaocr::kaptchaocr_classification().unwrap();
 let res = ocr.classification(image).unwrap();
 println!("{:?}", res);
 ```
@@ -83,7 +84,7 @@ println!("{:?}", res);
 
 ```rust
 let image = std::fs::read("target.png").unwrap();
-let mut ocr = kaptchowmin::kaptchowmin_classification_old().unwrap();
+let mut ocr = kaptchaocr::kaptchaocr_classification_old().unwrap();
 let res = ocr.classification(image).unwrap();
 println!("{:?}", res);
 ```
@@ -99,7 +100,7 @@ classification_with_png_fix(image, true);
 Supports the following preset colors: red, blue, green, yellow, orange, purple, cyan, black, white, gray.
 
 ```rust
-let ocr = kaptchowmin_classification().unwrap();
+let ocr = kaptchaocr_classification().unwrap();
 
 // Keep only green
 println!(
@@ -148,7 +149,7 @@ println!(
 
 ```rust
 let image = std::fs::read("target.png").unwrap();
-let mut det = kaptchowmin::kaptchowmin_detection().unwrap();
+let mut det = kaptchaocr::kaptchaocr_detection().unwrap();
 let res = det.detection(image).unwrap();
 println!("{:?}", res);
 ```
@@ -181,7 +182,7 @@ Then the background has a small slider slot, as shown below:
 ```rust
 let target_bytes = std::fs::read("target.png").unwrap();
 let background_bytes = std::fs::read("background.png").unwrap();
-let res = kaptchowmin::slide_match(target_bytes, background_bytes).unwrap();
+let res = kaptchaocr::slide_match(target_bytes, background_bytes).unwrap();
 println!("{:?}", res);
 ```
 
@@ -190,7 +191,7 @@ If the small image does not have too much background, you can use simple_slide_m
 ```rust
 let target_bytes = std::fs::read("target.png").unwrap();
 let background_bytes = std::fs::read("background.png").unwrap();
-let res = kaptchowmin::simple_slide_match(target_bytes, background_bytes).unwrap();
+let res = kaptchaocr::simple_slide_match(target_bytes, background_bytes).unwrap();
 println!("{:?}", res);
 ```
 
@@ -206,7 +207,7 @@ One image is the original image, as shown below:
 ```rust
 let target_bytes = std::fs::read("target.png").unwrap();
 let background_bytes = std::fs::read("background.png").unwrap();
-let res = kaptchowmin::slide_comparison(target_bytes, background_bytes).unwrap();
+let res = kaptchaocr::slide_comparison(target_bytes, background_bytes).unwrap();
 println!("{:?}", res);
 ```
 
@@ -233,7 +234,7 @@ If the value is of type string, please pass in a piece of text that does not con
 
 ```rust
 let image = std::fs::read("image.png").unwrap();
-let mut ocr = kaptchowmin::kaptchowmin_classification().unwrap();
+let mut ocr = kaptchaocr::kaptchaocr_classification().unwrap();
 
 // The number 3 corresponds to the enumeration CharsetRange::LowercaseUppercase, no need to write the enumeration
 // ocr.set_ranges(3);
@@ -315,9 +316,9 @@ Any third-party ONNX recognition model can be imported when paired with a
 charset JSON file (same schema as the bundled configs — see `model/README.md`):
 
 ```rust
-use kaptchowmin::*;
+use kaptchaocr::*;
 
-let mut ocr = Kaptchowmin::with_model_charset(
+let mut ocr = KaptchaOcr::with_model_charset(
     "captcha_model.onnx",
     "charset.json",
 )
@@ -344,8 +345,8 @@ The repo ships PP-OCRv6 recognition models fine-tuned on a captcha dataset
 > Measured on 6 per-source test sets (4,399 images); exact = whole string
 > correct, case-sensitive. The fine-tuned models are case-sensitive; the base
 > (non-fine-tuned) PP-OCRv6 models collapse case, scoring ~0 exact on the
-> lowercase/10-char splits. Dataset, harness and reproduction live in the R&D
-> folder `../captchowmin-rnd/`.
+> lowercase/10-char splits. Dataset and harness live in the private training
+> workspace (not distributed with this package).
 
 The same pipeline produced a fine-tuned **glyph detector** for click captchas:
 
@@ -357,8 +358,8 @@ The same pipeline produced a fine-tuned **glyph detector** for click captchas:
 | `ft-medium-det` | 93.8% | 98.0% | **95.9%** | **59.8%** | val2 (seed 21) |
 | `stock-det` (bundled) | 87.3% | 46.4% | 60.6% | 37.9% | val |
 
-> Greedy glyph matching at IoU 0.5 / 0.75 (harness: `eval_det` in
-> `../captchowmin-rnd/`). `ft-small-det` is the default recommendation
+> Greedy glyph matching at IoU 0.5 / 0.75 (harness: `eval_det` in the private
+> training workspace). `ft-small-det` is the default recommendation
 > (fastest); `ft-medium-det` is ~4× slower but produces clearly tighter boxes
 > (better at IoU ≥ 0.75). For `/solve/click` use `--det-model ft-small-det`
 > (or `ft-medium-det`) with `--rec-model ft-small` and pass `charset_range`
@@ -368,15 +369,15 @@ Server-side profile selection (requires `--manifest`):
 
 ```sh
 # recommended: small (balanced — also the manifest default)
-kaptchowmin --ocr --manifest model/models.json --profile balanced
+kaptchaocr --ocr --manifest model/models.json --profile balanced
 
-kaptchowmin --ocr --manifest model/models.json --profile fast      # tiny, fastest
-kaptchowmin --ocr --manifest model/models.json --profile accurate  # medium, most accurate
-kaptchowmin --ocr --manifest model/models.json --rec-model stock-common  # any entry by name
+kaptchaocr --ocr --manifest model/models.json --profile fast      # tiny, fastest
+kaptchaocr --ocr --manifest model/models.json --profile accurate  # medium, most accurate
+kaptchaocr --ocr --manifest model/models.json --rec-model stock-common  # any entry by name
 ```
 
 Without `--manifest`, the bundled (inline) `stock_common` / `stock_old` models are
-used. From Rust, load directly with `Kaptchowmin::new(bytes, charset)` (charset:
+used. From Rust, load directly with `KaptchaOcr::new(bytes, charset)` (charset:
 `model/finetuned/<tier>_rec.json`). Conversion notes: `model/README.md` and the
 R&D folder.
 
@@ -390,8 +391,8 @@ The `Dockerfile` compiles the binary inside its build stage — the host only
 needs Docker (see the [Docker](#docker) section for details):
 
 ```sh
-docker build -t kaptchowmin .   # first run only, ~10 min
-docker run --rm -p 8000:8000 kaptchowmin
+docker build -t kaptchaocr .   # first run only, ~10 min
+docker run --rm -p 8000:8000 kaptchaocr
 ```
 
 Everything is the image default:
@@ -403,7 +404,7 @@ Everything is the image default:
 
 ```sh
 cargo build --release
-make run   # = ./target/release/kaptchowmin --ocr --det --slide \
+make run   # = ./target/release/kaptchaocr --ocr --det --slide \
            #     --manifest model/models.json --profile balanced
 ```
 
@@ -426,7 +427,7 @@ curl http://127.0.0.1:8000/status
 ## CLI options
 
 ```sh
-Usage: kaptchowmin [OPTIONS]
+Usage: kaptchaocr [OPTIONS]
 
 Options:
       --address <ADDRESS>
@@ -480,13 +481,13 @@ enables all features and defaults to `balanced` (ft-small):
 
 ```sh
 # Build (the build stage needs network access for ONNX Runtime)
-docker build -t kaptchowmin .
+docker build -t kaptchaocr .
 
 # Run (defaults to --ocr --det --slide --manifest model/models.json --profile balanced)
-docker run --rm -p 8000:8000 kaptchowmin
+docker run --rm -p 8000:8000 kaptchaocr
 
 # Arguments replace the default CMD entirely, e.g. switch to the most accurate tier
-docker run --rm -p 8000:8000 kaptchowmin --ocr --det --slide \
+docker run --rm -p 8000:8000 kaptchaocr --ocr --det --slide \
     --manifest model/models.json --profile accurate
 
 # Mount your own model + manifest
@@ -494,10 +495,10 @@ docker run --rm -p 8000:8000 \
     -v "$PWD/my_rec.onnx:/app/model/my_rec.onnx:ro" \
     -v "$PWD/my_rec.json:/app/model/my_rec.json:ro" \
     -v "$PWD/my_manifest.json:/app/model/my_manifest.json:ro" \
-    kaptchowmin --ocr --manifest model/my_manifest.json
+    kaptchaocr --ocr --manifest model/my_manifest.json
 
 # OCR + slider only, with an API key
-docker run --rm -p 8000:8000 kaptchowmin --ocr --slide --api-key secret
+docker run --rm -p 8000:8000 kaptchaocr --ocr --slide --api-key secret
 ```
 
 The image contains `model/stock_*` and `model/finetuned/` (not
@@ -586,7 +587,7 @@ pip install clients/python   # or editable: pip install -e clients/python
 ```
 
 ```python
-from captchowmin import Client
+from kaptchaocr import Client
 
 client = Client("http://127.0.0.1:8000", timeout=10, retries=2)
 
@@ -606,7 +607,7 @@ are retried with exponential backoff honoring `Retry-After`. See
 
 ## MCP Protocol Support
 
-This project supports the MCP (Model Context Protocol), enabling AI Agents to directly invoke the kaptchowmin service.
+This project supports the MCP (Model Context Protocol), enabling AI Agents to directly invoke the kaptchaocr service.
 
 Version: 2025-03-26
 
@@ -671,13 +672,13 @@ Most of the download failures are network problems. After enabling the proxy, re
 
 The automatically downloaded link library is stored in `C:\Users\<username>\AppData\ort.pyke.io`.
 
-Enable the dynamic linking feature `kaptchowmin = { path = "path/to/captchowmin", features = ["load-dynamic"] }`
+Enable the dynamic linking feature `kaptchaocr = { path = "path/to/kaptchaocr", features = ["load-dynamic"] }`
 
-After enabling the `load-dynamic` feature, you can use `Kaptchowmin::set_onnxruntime_path` to specify the path of the [onnxruntime](https://github.com/microsoft/onnxruntime/releases/tag/v1.18.1) dynamic link library.
+After enabling the `load-dynamic` feature, you can use `KaptchaOcr::set_onnxruntime_path` to specify the path of the [onnxruntime](https://github.com/microsoft/onnxruntime/releases/tag/v1.18.1) dynamic link library.
 
 After enabling the `load-dynamic` feature, the [onnxruntime](https://github.com/microsoft/onnxruntime/releases/tag/v1.18.1) link library will not be automatically downloaded during construction.
 
-Please manually download the [onnxruntime](https://github.com/microsoft/onnxruntime/releases/tag/v1.18.1) link library and place it in the program's running directory (or system API directory), so you don't need to call `Kaptchowmin::set_onnxruntime_path` again.
+Please manually download the [onnxruntime](https://github.com/microsoft/onnxruntime/releases/tag/v1.18.1) link library and place it in the program's running directory (or system API directory), so you don't need to call `KaptchaOcr::set_onnxruntime_path` again.
 
 Windows static linking failed, please install vs2022.
 
@@ -694,3 +695,12 @@ cuda may `painc (exit code: 0xc000007b)` when executing `cargo test`. This is be
 Dynamic linking requires version 1.18.x of [onnxruntime](https://github.com/microsoft/onnxruntime/releases/tag/v1.18.1).
 
 For more complex issues, please visit [ort.pyke.io](https://ort.pyke.io/).
+
+# Acknowledgements
+
+- [ddddocr](https://github.com/sml2h3/ddddocr) — the bundled stock
+  recognition/detection models and the original implementation this project is
+  based on. MIT licensed; the required notice is reproduced in
+  [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+- [PaddleOCR / PP-OCRv6](https://github.com/PaddlePaddle/PaddleOCR) — the base
+  detection/recognition models used for the fine-tuned models. Apache-2.0.

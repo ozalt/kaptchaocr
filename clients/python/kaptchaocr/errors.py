@@ -1,11 +1,11 @@
-"""Exceptions raised by the captchowmin client."""
+"""Exceptions raised by the kaptchaocr client."""
 
 
-class CaptchowminError(Exception):
+class KaptchaOcrError(Exception):
     """Base class for all client errors."""
 
 
-class ServerError(CaptchowminError):
+class ServerError(KaptchaOcrError):
     """The server answered with an HTTP or business error code."""
 
     def __init__(self, status: int, code: int, msg: str):
@@ -15,5 +15,5 @@ class ServerError(CaptchowminError):
         self.msg = msg
 
 
-class NetworkError(CaptchowminError):
+class NetworkError(KaptchaOcrError):
     """The request never reached the server (connection error or timeout)."""

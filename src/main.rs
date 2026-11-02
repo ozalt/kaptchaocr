@@ -2,7 +2,7 @@ use base64::prelude::*;
 use clap::ArgGroup;
 use clap::Parser;
 use enable_ansi_support::enable_ansi_support;
-use kaptchowmin::*;
+use kaptchaocr::*;
 use lru::LruCache;
 use rmcp::model::CallToolResult;
 use rmcp::model::ClientNotification;
@@ -45,8 +45,8 @@ use tracing::warn;
 use tracing_subscriber::EnvFilter;
 
 static ARGS: OnceLock<Args> = OnceLock::new();
-static OCR: OnceLock<Kaptchowmin> = OnceLock::new();
-static DET: OnceLock<Kaptchowmin> = OnceLock::new();
+static OCR: OnceLock<KaptchaOcr> = OnceLock::new();
+static DET: OnceLock<KaptchaOcr> = OnceLock::new();
 static CACHE: LazyLock<Mutex<LruCache<String, Vec<String>>>> =
     LazyLock::new(|| Mutex::new(LruCache::new(NonZero::new(64).unwrap())));
 
@@ -538,8 +538,8 @@ struct SolveTrajectoryPoint {
     t: f64,
 }
 
-impl From<kaptchowmin::trajectory::TrajectoryPoint> for SolveTrajectoryPoint {
-    fn from(point: kaptchowmin::trajectory::TrajectoryPoint) -> Self {
+impl From<kaptchaocr::trajectory::TrajectoryPoint> for SolveTrajectoryPoint {
+    fn from(point: kaptchaocr::trajectory::TrajectoryPoint) -> Self {
         Self {
             x: point.x,
             y: point.y,
@@ -724,7 +724,7 @@ async fn route_solve(req: JsonBody<SolveRequest>, res: &mut Response) -> anyhow:
     let math = if req.math.as_deref().unwrap_or("auto") == "off" {
         None
     } else {
-        kaptchowmin::math::solve(&text).map(|solved| MathAnswer {
+        kaptchaocr::math::solve(&text).map(|solved| MathAnswer {
             expression: solved.expression,
             result: solved.result,
             answer: solved.answer,
@@ -769,7 +769,7 @@ async fn route_solve_click(
     let targets = req
         .prompt
         .as_deref()
-        .map(kaptchowmin::click::parse_prompt)
+        .map(kaptchaocr::click::parse_prompt)
         .filter(|prompt| !prompt.is_empty());
     let prompt_text = targets
         .as_ref()
@@ -849,7 +849,7 @@ async fn route_solve_click(
 
         let (order, unmatched) = match &targets {
             Some(prompt) => {
-                let matched = kaptchowmin::click::match_prompt(prompt, &recognized);
+                let matched = kaptchaocr::click::match_prompt(prompt, &recognized);
                 (matched.order, matched.unmatched)
             }
             None => (Vec::new(), Vec::new()),
@@ -1125,13 +1125,13 @@ async fn route_slide_solve(
 
     let duration_ms = req
         .duration_ms
-        .unwrap_or_else(|| kaptchowmin::trajectory::default_duration_ms(distance))
+        .unwrap_or_else(|| kaptchaocr::trajectory::default_duration_ms(distance))
         .clamp(80.0, 5000.0);
 
     let seed = req.seed.unwrap_or_else(random_seed);
 
     let trajectory = if req.trajectory.unwrap_or(true) {
-        kaptchowmin::trajectory::human_trajectory(distance, duration_ms, seed)
+        kaptchaocr::trajectory::human_trajectory(distance, duration_ms, seed)
             .into_iter()
             .map(SolveTrajectoryPoint::from)
             .collect()
@@ -1239,16 +1239,16 @@ async fn route_metrics(res: &mut Response) {
     let max_concurrency = INFERENCE_CAP.get().copied().unwrap_or(0);
 
     let body = format!(
-        "# TYPE kaptchowmin_requests_total counter\n\
-         kaptchowmin_requests_total {req}\n\
-         # TYPE kaptchowmin_errors_total counter\n\
-         kaptchowmin_errors_total {errs}\n\
-         # TYPE kaptchowmin_active_tasks gauge\n\
-         kaptchowmin_active_tasks {active}\n\
-         # TYPE kaptchowmin_queue_depth gauge\n\
-         kaptchowmin_queue_depth {queue_depth}\n\
-         # TYPE kaptchowmin_max_concurrency gauge\n\
-         kaptchowmin_max_concurrency {max_concurrency}\n"
+        "# TYPE kaptchaocr_requests_total counter\n\
+         kaptchaocr_requests_total {req}\n\
+         # TYPE kaptchaocr_errors_total counter\n\
+         kaptchaocr_errors_total {errs}\n\
+         # TYPE kaptchaocr_active_tasks gauge\n\
+         kaptchaocr_active_tasks {active}\n\
+         # TYPE kaptchaocr_queue_depth gauge\n\
+         kaptchaocr_queue_depth {queue_depth}\n\
+         # TYPE kaptchaocr_max_concurrency gauge\n\
+         kaptchaocr_max_concurrency {max_concurrency}\n"
     );
 
     res.render(Text::Plain(body));
@@ -1591,7 +1591,7 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_ansi(enable_ansi_support().is_ok())
         .with_env_filter(
-            // RUST_LOG = "info,kaptchowmin=debug"
+            // RUST_LOG = "info,kaptchaocr=debug"
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .init();
@@ -1698,7 +1698,7 @@ async fn main() {
         router = router.push(Router::with_path("/mcp").post(route_mcp))
     }
 
-    let docs = OpenApi::new("kaptchowmin api", "1.0.0").merge_router(&router);
+    let docs = OpenApi::new("kaptchaocr api", "1.0.0").merge_router(&router);
 
     let router = router
         .unshift(docs.into_router("/docs.json"))
@@ -1778,7 +1778,7 @@ fn ocr_charset_range(args: &Args) -> anyhow::Result<Option<CharsetRange>> {
 /// Defaults to the first rec / det entry in the manifest; `--rec-model <name>` / `--profile <name>`
 /// can select the rec entry, and `--det-model <name>` the det entry. Manifest paths are relative to the working directory.
 fn init_from_manifest(manifest_path: &str, args: &Args) -> anyhow::Result<()> {
-    use kaptchowmin::manifest::ModelManifest;
+    use kaptchaocr::manifest::ModelManifest;
 
     let manifest = ModelManifest::load(manifest_path)?;
 
@@ -1851,31 +1851,31 @@ fn init_ocr(args: &Args) -> anyhow::Result<()> {
     let num_threads = (args.num_threads > 0).then_some(args.num_threads);
 
     if args.ocr {
-        let mut kaptchowmin = match num_threads {
-            Some(n) => kaptchowmin_classification_with_num_threads(n)?,
-            None => kaptchowmin_classification()?,
+        let mut kaptchaocr = match num_threads {
+            Some(n) => kaptchaocr_classification_with_num_threads(n)?,
+            None => kaptchaocr_classification()?,
         };
 
         if let Some(v) = ocr_charset_range {
-            kaptchowmin.set_ranges(v)
+            kaptchaocr.set_ranges(v)
         };
 
-        OCR.set(kaptchowmin)
+        OCR.set(kaptchaocr)
             .map_err(|_| anyhow::anyhow!("OCR already enabled"))?;
 
         set_model_name("stock-common");
         info!("ocr enabled successfully");
     } else if args.old {
-        let mut kaptchowmin = match num_threads {
-            Some(n) => kaptchowmin_classification_old_with_num_threads(n)?,
-            None => kaptchowmin_classification_old()?,
+        let mut kaptchaocr = match num_threads {
+            Some(n) => kaptchaocr_classification_old_with_num_threads(n)?,
+            None => kaptchaocr_classification_old()?,
         };
 
         if let Some(v) = ocr_charset_range {
-            kaptchowmin.set_ranges(v)
+            kaptchaocr.set_ranges(v)
         };
 
-        OCR.set(kaptchowmin)
+        OCR.set(kaptchaocr)
             .map_err(|_| anyhow::anyhow!("OCR already enabled"))?;
 
         set_model_name("stock-old");
@@ -1883,12 +1883,12 @@ fn init_ocr(args: &Args) -> anyhow::Result<()> {
     }
 
     if args.det {
-        let kaptchowmin = match num_threads {
-            Some(n) => kaptchowmin_detection_with_num_threads(n)?,
-            None => kaptchowmin_detection()?,
+        let kaptchaocr = match num_threads {
+            Some(n) => kaptchaocr_detection_with_num_threads(n)?,
+            None => kaptchaocr_detection()?,
         };
 
-        DET.set(kaptchowmin)
+        DET.set(kaptchaocr)
             .map_err(|_| anyhow::anyhow!("detection already enabled"))?;
 
         info!("det enabled successfully");
@@ -1914,21 +1914,21 @@ fn init_ocr(args: &Args) -> anyhow::Result<()> {
 
         let charset = read_to_string(path)?;
 
-        let mut kaptchowmin = if args.num_threads > 0 {
-            Kaptchowmin::new_with_num_threads(
+        let mut kaptchaocr = if args.num_threads > 0 {
+            KaptchaOcr::new_with_num_threads(
                 &model,
                 Charset::from_str(&charset)?,
                 args.num_threads,
             )?
         } else {
-            Kaptchowmin::new(&model, Charset::from_str(&charset)?)?
+            KaptchaOcr::new(&model, Charset::from_str(&charset)?)?
         };
 
         if let Some(v) = ocr_charset_range {
-            kaptchowmin.set_ranges(v)
+            kaptchaocr.set_ranges(v)
         };
 
-        OCR.set(kaptchowmin)
+        OCR.set(kaptchaocr)
             .map_err(|_| anyhow::anyhow!("OCR already enabled"))?;
 
         set_model_name(
@@ -1948,13 +1948,13 @@ fn init_ocr(args: &Args) -> anyhow::Result<()> {
     if args.det {
         let model = read(args.det_path.clone())?;
 
-        let kaptchowmin = if args.num_threads > 0 {
-            Kaptchowmin::new_model_with_num_threads(&model, args.num_threads)?
+        let kaptchaocr = if args.num_threads > 0 {
+            KaptchaOcr::new_model_with_num_threads(&model, args.num_threads)?
         } else {
-            Kaptchowmin::new_model(&model)?
+            KaptchaOcr::new_model(&model)?
         };
 
-        DET.set(kaptchowmin)
+        DET.set(kaptchaocr)
             .map_err(|_| anyhow::anyhow!("detection already enabled"))?;
 
         info!("det enabled successfully");

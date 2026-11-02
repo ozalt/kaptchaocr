@@ -1,21 +1,21 @@
 ---
-name: kaptchowmin
-description: "KAPTCHOWMIN OCR recognition service with MCP protocol support. Provides optical character recognition, object detection, and slide matching capabilities. Use for: Recognizing text from captcha images, Detecting objects/text regions in images, Matching slide positions for verification codes, Performing any OCR-related tasks through MCP protocol."
+name: kaptchaocr
+description: "KAPTCHAOCR OCR recognition service with MCP protocol support. Provides optical character recognition, object detection, and slide matching capabilities. Use for: Recognizing text from captcha images, Detecting objects/text regions in images, Matching slide positions for verification codes, Performing any OCR-related tasks through MCP protocol."
 ---
 
-# KAPTCHOWMIN Service
+# KAPTCHAOCR Service
 
 ## Quick Start
 
-Start the kaptchowmin service with all features enabled:
+Start the kaptchaocr service with all features enabled:
 
 ```bash
-python scripts/start_kaptchowmin.py
+python scripts/start_kaptchaocr.py
 ```
 
 The script automatically:
 - Checks if service is already running
-- Downloads the latest kaptchowmin binary for current platform if needed
+- Downloads the latest kaptchaocr binary for current platform if needed
 - Starts service with ocr, det, slide, and mcp features
 - Binds to 127.0.0.1:8000 by default
 

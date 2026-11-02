@@ -1,15 +1,15 @@
-# kaptchowmin (Rust) — Developer Guide
+# kaptchaocr (Rust) — Developer Guide
 
 This document explains what lives in this repository and how every piece works
 technically. It is written against the current state of `master`.
 
 ## 1. What This Repo Is
 
-`kaptchowmin` is a Rust re-implementation of the popular Python CAPTCHA
+`kaptchaocr` is a Rust re-implementation of the popular Python CAPTCHA
 recognition library of the same name. The crate contains two artifacts in one
 repository:
 
-1. **`kaptchowmin` — the library** (`src/lib.rs`): CAPTCHA OCR (classification),
+1. **`kaptchaocr` — the library** (`src/lib.rs`): CAPTCHA OCR (classification),
    object detection (for "click-to-select" captchas), slide-captcha matching,
    color filtering, and per-call character-set restriction. Inference runs
    through ONNX Runtime via the `ort` crate.
@@ -42,7 +42,7 @@ or Python dependency.
 │   ├── finetuned/                  # PP-OCRv6 rec tiny/small/medium fine-tuned on captchas
 │   └── ppocrv6/                    # Base PP-OCRv6 rec/det exports (not needed in images)
 ├── src/
-│   ├── lib.rs                      # The kaptchowmin library
+│   ├── lib.rs                      # The kaptchaocr library
 │   ├── manifest.rs                 # ONNX model manifest (`models.json`) loader
 │   ├── math.rs                     # Arithmetic captcha parser/solver (ASCII + Chinese)
 │   ├── trajectory.rs               # Human-like slider drag trajectory generator
@@ -61,7 +61,7 @@ or Python dependency.
 |--------------------|---------|--------|
 | `inline-model`     | ✅      | Embed the three ONNX models + charsets into the binary via `include_bytes!`/`include_str!`. Without it, models are read from a `model/` directory at startup. |
 | `download-binaries`| ✅      | Auto-download ONNX Runtime native libs at build time (via `ort`). |
-| `load-dynamic`     | ❌      | Load a user-supplied ONNX Runtime `.so`/`.dll` at runtime (`Kaptchowmin::set_onnxruntime_path`). |
+| `load-dynamic`     | ❌      | Load a user-supplied ONNX Runtime `.so`/`.dll` at runtime (`KaptchaOcr::set_onnxruntime_path`). |
 | `cuda`             | ❌      | Enable the CUDA execution provider (only in the library; the server binary does not expose CUDA). |
 
 Note: `ort` is pulled from a **git fork** (`https://github.com/86maid/ort.git`)
@@ -74,17 +74,17 @@ with features `ndarray`, `half`, `copy-dylibs`, not from crates.io. There is no
 
 Feature-gated convenience constructors:
 
-- `kaptchowmin_classification()` → `Kaptchowmin` with `stock_common.onnx` + `stock_common.json`.
+- `kaptchaocr_classification()` → `KaptchaOcr` with `stock_common.onnx` + `stock_common.json`.
   Panics if `--ocr-path` models are expected but inline-model is off and files
   are missing (the non-inline variants use `std::fs::read` directly).
-- `kaptchowmin_classification_old()` → old model + charset.
-- `kaptchowmin_detection()` → `stock_det.onnx` only (no charset).
+- `kaptchaocr_classification_old()` → old model + charset.
+- `kaptchaocr_detection()` → `stock_det.onnx` only (no charset).
 - `*_cuda(device_id)` variants require the `cuda` feature.
 
-### 4.2 The `Kaptchowmin` struct
+### 4.2 The `KaptchaOcr` struct
 
 ```rust
-pub struct Kaptchowmin<'a> {
+pub struct KaptchaOcr<'a> {
     diy: bool,                          // true for any model other than the two official ones
     session: ort::Session,              // ONNX Runtime session (models load from memory)
     charset: Option<Cow<'a, Charset>>,  // charset JSON; None for detection sessions
@@ -310,8 +310,8 @@ If no feature flag is given at all, everything is enabled (`ocr + old + det
 ### 5.2 Global singletons
 
 - `ARGS: OnceLock<Args>` — parsed CLI args (also read by `route_status`).
-- `OCR: OnceLock<Kaptchowmin>` — classification session (new or old).
-- `DET: OnceLock<Kaptchowmin>` — detection session.
+- `OCR: OnceLock<KaptchaOcr>` — classification session (new or old).
+- `DET: OnceLock<KaptchaOcr>` — detection session.
 - `CACHE: LazyLock<Mutex<LruCache<String, Vec<String>>>>(64)` — memoizes
   `calc_ranges` results keyed by the raw charset string so repeated
   `charset_range` requests skip recomputation.
@@ -361,7 +361,7 @@ A hand-rolled JSON-RPC 2.0 over HTTP server (uses `rmcp` **only** for the
 message/error types, not for serving):
 
 - `initialize` → the static `InitializeResult` compiled from
-  `initialize.json` (protocol 2025-03-26, serverInfo kaptchowmin 1.0.0).
+  `initialize.json` (protocol 2025-03-26, serverInfo kaptchaocr 1.0.0).
 - `tools/list` → `ListToolsResult` built from `list.json`, **filtered at
   startup to the enabled features** (`ocr`/`old` → ocr, `det` → det,
   `slide` → slide_match + slide_comparison); MCP tool names use underscores
@@ -424,12 +424,12 @@ prints the equivalent `curl` command and the raw response.
 
 Zero-dependency (stdlib `urllib`) synchronous client:
 
-- `captchowmin/client.py` — `Client` with `solve`, `solve_file`, `ocr`, `det`,
+- `kaptchaocr/client.py` — `Client` with `solve`, `solve_file`, `ocr`, `det`,
   `slide_match`, `slide_comparison`, `slide_solve`, `status`, `healthz`;
   automatic retries for connection errors / 5xx / 429 (exponential backoff,
   `Retry-After` respected) and `x-api-key` support. The HTTP transport is
   injectable, which is what the tests use.
-- `captchowmin/models.py` / `errors.py` — typed dataclasses and
+- `kaptchaocr/models.py` / `errors.py` — typed dataclasses and
   `ServerError` / `NetworkError`.
 - `tests/test_client.py` — 15 offline `unittest` tests
   (`python3 -m unittest discover`), no server required.

@@ -53,11 +53,11 @@ def get_platform_info():
 
 
 def get_latest_release_info(filename):
-    releases_url = os.environ.get("KAPTCHOWMIN_RELEASES_URL")
+    releases_url = os.environ.get("KAPTCHAOCR_RELEASES_URL")
 
     if not releases_url:
         print(
-            "KAPTCHOWMIN_RELEASES_URL is not set; skipping release download "
+            "KAPTCHAOCR_RELEASES_URL is not set; skipping release download "
             "(build locally with 'cargo build --release', or set the variable to a "
             "releases API URL).",
             file=sys.stderr,
@@ -154,9 +154,9 @@ def download_and_extract(url, dest_dir):
 def find_executable(directory):
     for root, dirs, files in os.walk(directory):
         for file in files:
-            if platform.system().lower() == "windows" and file == "kaptchowmin.exe":
+            if platform.system().lower() == "windows" and file == "kaptchaocr.exe":
                 return os.path.join(root, file)
-            elif platform.system().lower() != "windows" and file == "kaptchowmin":
+            elif platform.system().lower() != "windows" and file == "kaptchaocr":
                 return os.path.join(root, file)
     return None
 
@@ -197,7 +197,7 @@ def wait_for_service(host, port, timeout=30):
     return False
 
 
-def start_kaptchowmin(exe_path, address="127.0.0.1", port=8000):
+def start_kaptchaocr(exe_path, address="127.0.0.1", port=8000):
     args = [
         exe_path,
         "--address",
@@ -223,7 +223,7 @@ def find_local_build():
     repo_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
     )
-    name = "kaptchowmin.exe" if platform.system().lower() == "windows" else "kaptchowmin"
+    name = "kaptchaocr.exe" if platform.system().lower() == "windows" else "kaptchaocr"
 
     for sub in ("target/release", "target/debug"):
         candidate = os.path.join(repo_root, sub, name)
@@ -238,7 +238,7 @@ def main():
     port = 8000
 
     if check_running(address, port):
-        print(f"KAPTCHOWMIN service already running on {address}:{port}")
+        print(f"KAPTCHAOCR service already running on {address}:{port}")
         print(f"MCP endpoint: http://{address}:{port}/mcp")
         return 0
 
@@ -250,7 +250,7 @@ def main():
         )
         return 1
 
-    cache_dir = os.path.join(os.path.expanduser("~"), ".kaptchowmin_cache")
+    cache_dir = os.path.join(os.path.expanduser("~"), ".kaptchaocr_cache")
     os.makedirs(cache_dir, exist_ok=True)
 
     url, latest_version = get_latest_release_info(filename)
@@ -261,7 +261,7 @@ def main():
 
         if not exe_path:
             print(
-                "Error: no release URL configured (set KAPTCHOWMIN_RELEASES_URL) and "
+                "Error: no release URL configured (set KAPTCHAOCR_RELEASES_URL) and "
                 "no local build found; run 'cargo build --release' first.",
                 file=sys.stderr,
             )
@@ -281,7 +281,7 @@ def main():
                 if not exe_path
                 else f"Updating ({cached_version} -> {latest_version})"
             )
-            print(f"{action} KAPTCHOWMIN: {filename}...")
+            print(f"{action} KAPTCHAOCR: {filename}...")
 
         if need_download:
             print(f"Downloading from: {url}")
@@ -306,18 +306,18 @@ def main():
                 else:
                     return 1
         else:
-            print(f"Using cached KAPTCHOWMIN: v{latest_version}")
+            print(f"Using cached KAPTCHAOCR: v{latest_version}")
             set_executable_permission(exe_path)
 
     if not exe_path:
-        print("Error: Could not find kaptchowmin executable", file=sys.stderr)
+        print("Error: Could not find kaptchaocr executable", file=sys.stderr)
         return 1
 
     print(f"Executable: {exe_path}")
-    print(f"Starting KAPTCHOWMIN service on {address}:{port}...")
+    print(f"Starting KAPTCHAOCR service on {address}:{port}...")
     print(f"Features: ocr, det, slide, mcp")
 
-    process = start_kaptchowmin(exe_path, address, port)
+    process = start_kaptchaocr(exe_path, address, port)
 
     print(f"Service started with PID: {process.pid}")
     print(f"MCP endpoint: http://{address}:{port}/mcp")
