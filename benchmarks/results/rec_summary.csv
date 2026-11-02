@@ -1,0 +1,9 @@
+model,family,exact_rate,char_acc,mean_ms,size_mb
+stock-common,ddddocr,0.142987,0.422823,32.551,51.58
+stock-old,ddddocr,0.152535,0.422282,28.702,12.98
+base-tiny,PP-OCRv6 base,0.088657,0.380662,9.791,4.26
+base-small,PP-OCRv6 base,0.237327,0.554623,25.255,20.18
+base-medium,PP-OCRv6 base,0.285519,0.590237,75.005,73.01
+ft-tiny,KaptchaOCR fine-tuned,0.670380,0.888036,9.765,4.26
+ft-small,KaptchaOCR fine-tuned,0.804046,0.930275,28.330,20.18
+ft-medium,KaptchaOCR fine-tuned,0.906797,0.960120,68.844,73.01
