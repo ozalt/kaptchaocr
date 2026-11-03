@@ -159,32 +159,13 @@ Sorted by F1@0.5. Glyph-level ground truth; greedy polygon matching.
 
 ### Reproduce the charts
 
-The raw inference outputs are committed here. Re-running inference requires
-the training workspace (datasets + eval harness); the public repo can
-regenerate every chart from the CSVs:
+The raw inference outputs are committed here. Re-running inference needs the
+private evaluation harness; the public repo can regenerate every chart from the
+committed CSVs:
 
 ```sh
 python3 -m pip install matplotlib numpy
 python3 benchmarks/plot_benchmarks.py
-```
-
-Harness commands (run from the library root, private training workspace):
-
-```sh
-# recognition
-cargo run --release --manifest-path ../captchowmin-rnd/Cargo.toml --example eval_dataset -- \
-  --root ../captchowmin-rnd/dataset-curation-rec/final_dataset \
-  --splits test_archive1,test_archive2,test_archive3,test_hammer888,test_kaggle,test_lcsd \
-  --out ../captchowmin-rnd/benchmarks/results/rec_2026-11-03.csv
-
-# detection — fresh unseen split, then evaluate
-cargo run --release --manifest-path ../captchowmin-rnd/Cargo.toml --example gen_det -- \
-  --out ../captchowmin-rnd/dataset-curation-det/unseen_2026-11-03 --n 400 \
-  --layout scatter --lang both --seed 20261103 --split test
-cargo run --release --manifest-path ../captchowmin-rnd/Cargo.toml --example eval_det -- \
-  --root ../captchowmin-rnd/dataset-curation-det/unseen_2026-11-03/test \
-  --manifest model/models.json \
-  --out ../captchowmin-rnd/benchmarks/results/det_2026-11-03.csv
 ```
 
 No dataset images are redistributed in this repository; only metrics and
@@ -200,4 +181,4 @@ ddddocr (MIT) and PP-OCRv6 (Apache-2.0) notices.
 | `results/rec_summary.csv` | aggregated recognition numbers |
 | `results/det_summary.csv` | aggregated detection numbers |
 | `plot_benchmarks.py` | regenerates all charts from the CSVs |
-| `../docs/assets/benchmarks/` | light/dark PNG + SVG charts |
+| `../docs/assets/benchmarks/` | light/dark PNG charts (the plot script also writes SVG) |

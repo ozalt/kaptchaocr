@@ -27,18 +27,11 @@ one binary. You can run it locally, call it over HTTP, or use the Python client.
 No Python is needed on the server. The included models work out of the box, and
 you can load your own ONNX models with a simple model list.
 
-## What it can do — and what it can't
+## Disclaimer
 
-**It can:**
-- Read text and math CAPTCHAs.
-- Find the characters for "click the letters in order" CAPTCHAs.
-- Solve slider puzzles and make a drag path.
-- Run as a local HTTP server, or use the Rust library or Python client.
-
-**It can't do this yet:**
-- It does **not** solve CAPTCHAs that ask you to pick pictures of cars, trucks,
-  buses, traffic lights, or other objects. That is a different job and is
-  future work. It is not included in this repo yet.
+**KaptchaOCR does not solve CAPTCHAs that ask you to pick pictures of cars,
+trucks, buses, traffic lights, or other objects.** That is a different job and
+is still work in progress. It is not included in this repo yet.
 
 ## Features
 
@@ -185,7 +178,6 @@ the model list. See [Models](docs/models.md).
 | [Python client](docs/python-client.md) | `kaptchaocr.Client` API |
 | [Benchmarks](benchmarks/README.md) | Results, charts, method |
 | [Troubleshooting](docs/troubleshooting.md) | CUDA, ONNX Runtime and linking issues |
-| [Developer guide](developer-guide.md) | Code map and internals |
 
 ## How it works
 
@@ -217,7 +209,8 @@ are out, build from source or use Docker.
 ## Contributing
 
 Run `make test` and `make check` before opening a PR. Issues and PRs are
-welcome. For the code layout, read the [developer guide](developer-guide.md).
+welcome. The code lives in `src/`, with the models and Python client in
+`model/` and `clients/`.
 
 ## Acknowledgements
 

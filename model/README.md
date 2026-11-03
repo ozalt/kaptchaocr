@@ -7,12 +7,9 @@ Directory layout:
 | `stock_common.onnx` + `stock_common.json` | Stock recognition model (custom PyTorch CRNN/CTC, grayscale, H=64). `stock_common.json` = Charset config (`word`, `image`, `channel`, `charset`, optional `mean`/`std`/`bgr`). |
 | `stock_old.onnx` + `stock_old.json` | Stock "old" recognition model (INT8-quantized variant). |
 | `stock_det.onnx` | Stock detection model (custom YOLOv5-style, 416×416, anchor grid). |
-| `ppocrv6/` | PP-OCRv6 ONNX exports (tiny/small/medium × rec/det). **Gitignored** — re-download from HuggingFace, see `paddleOCR.md` §3. |
+| `ppocrv6/` | PP-OCRv6 ONNX exports (tiny/small/medium × rec/det). **Gitignored** — download from the [PP-OCRv6 collection](https://huggingface.co/collections/PaddlePaddle/pp-ocrv6) into this folder. |
 | `finetuned/` | Captcha-fine-tuned PP-OCRv6 ONNX: rec (tiny/small/medium) + charsets, and `{small,medium}_det.onnx` (glyph-level detectors for click captchas, manifest entries `ft-small-det` / `ft-medium-det`). Use the tier's `ppocrv6/<tier>_rec.json` charset (blank at index 0); training artifacts are kept in the private training workspace. |
 | `models.json` | Model manifest consumed by the server (`--manifest`) and the eval harness. Lets you wire arbitrary ONNX rec/det models without rebuilding. |
-
-Full reference on the PP-OCRv6 family (I/O, preprocessing, dicts) is in
-[`../paddleOCR.md`](../paddleOCR.md).
 
 ---
 

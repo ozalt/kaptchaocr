@@ -70,4 +70,4 @@ cargo clippy --all-targets -- -D warnings
 cargo clippy --all-targets --no-default-features --features download-binaries -- -D warnings
 ```
 
-Architecture and code map: [developer-guide.md](../developer-guide.md).
+Tests and lint are listed above. Architecture and code live in `src/`.

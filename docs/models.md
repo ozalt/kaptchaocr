@@ -16,8 +16,7 @@ and detectors through a manifest.
 
 The fine-tuned models are PP-OCRv6 models fine-tuned on a CAPTCHA dataset and
 exported to ONNX. The base `model/ppocrv6/` files are **gitignored** — see
-[`model/README.md`](../model/README.md) and [`paddleOCR.md`](../paddleOCR.md)
-for download/export notes.
+[`model/README.md`](../model/README.md) for download/export notes.
 
 ## Profiles
 

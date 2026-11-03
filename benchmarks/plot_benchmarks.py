@@ -2,9 +2,9 @@
 """Generate README-ready benchmark charts from the eval CSV results.
 
 Usage:
-    dataset-curation-rec/.venv/bin/python benchmarks/plot_benchmarks.py
+    python3 benchmarks/plot_benchmarks.py
 
-Inputs (produced by the eval harness in the training workspace):
+Inputs (committed):
     benchmarks/results/rec_2026-11-03.csv
     benchmarks/results/det_2026-11-03.csv
 

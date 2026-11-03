@@ -67,4 +67,3 @@ test run cannot load it. CUDA does not support static linking.
 
 - ONNX Runtime: <https://onnxruntime.ai/>
 - `ort` crate docs: <https://ort.pyke.io/>
-- Architecture/code map: [developer-guide.md](../developer-guide.md)

@@ -4,7 +4,8 @@ The detector returns rectangular boxes for text regions or glyphs. It is used
 directly through `/det`, and internally by `/solve/click`.
 
 > This is not general object detection. It finds text/character boxes, not cars,
-> trucks or other objects. Picking pictures in a CAPTCHA is not supported yet.
+> trucks or other objects. Picking pictures in a CAPTCHA is still work in
+> progress and is not supported yet.
 
 ```rust
 let image = std::fs::read("captcha.png").unwrap();

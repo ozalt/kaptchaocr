@@ -20,7 +20,6 @@ These pages cover the details.
 | [Troubleshooting](troubleshooting.md) | CUDA, static linking, ONNX Runtime issues |
 | [Python client](python-client.md) | Zero-dependency client usage |
 | [Benchmarks](../benchmarks/README.md) | Held-out accuracy/latency results and charts |
-| [Developer guide](../developer-guide.md) | Architecture, code map, internals |
 
 ## Conventions
 
@@ -31,8 +30,8 @@ These pages cover the details.
   `/slide/*` needs `--slide`, `/solve/click` needs both `--ocr` and `--det`,
   `/mcp` needs `--mcp` (or `--only-mcp`).
 
-## Scope
+## Disclaimer
 
-KaptchaOCR handles text CAPTCHAs, character-click CAPTCHAs and sliders. It does
-not pick pictures of cars, trucks, traffic lights or other objects. That kind of
-CAPTCHA is future work and is not supported yet.
+KaptchaOCR does not solve CAPTCHAs that ask you to pick pictures of cars,
+trucks, traffic lights, or other objects. That is a different job and is still
+work in progress. It is not included in this repo yet.
