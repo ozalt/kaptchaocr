@@ -48,11 +48,13 @@ or Python dependency.
 │   ├── trajectory.rs               # Human-like slider drag trajectory generator
 │   └── main.rs                     # The API server binary
 ├── clients/python/                 # Zero-dependency Python client + Playwright examples
+├── docs/                           # User guides (API, models, OCR, detection, ...)
+├── benchmarks/                     # Held-out results, methodology, chart generator
 ├── image/                          # Sample images used by the unit tests
 ├── test_api.py                     # Python smoke test hitting every REST + MCP endpoint
 ├── playwright-cookbook.md          # End-to-end browser recipes (text/math/slider)
 ├── developer-guide.md / paddleOCR.md
-└── README.md                       # User documentation
+└── README.md                       # Landing page + quick start
 ```
 
 ## 3. Cargo Features (Cargo.toml)
@@ -182,7 +184,8 @@ pub struct CharacterProbability {
 
 Alphabet restriction abstraction:
 
-- `0`…`7` map to fixed built-in presets via `From<i32>` (see README table):
+- `0`…`7` map to fixed built-in presets via `From<i32>` (see
+  [the OCR charset table](docs/ocr.md#charsets)):
   Digit, Lowercase, Uppercase, Lower+Upper, Lower+Digit, Upper+Digit,
   Lower+Upper+Digit, and "default charset minus alnum".
 - Any string (`From<&str>`) → `Other(String)` i.e. a custom character set.

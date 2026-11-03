@@ -251,7 +251,7 @@ struct Args {
     acme: Option<String>,
 
     /// Maximum number of concurrent ONNX inference tasks, defaults to the number of CPU cores.
-    /// 0 means unlimited.
+    /// 0 uses the number of CPU cores.
     #[arg(long, default_value_t = 0)]
     max_concurrency: usize,
 
@@ -1607,7 +1607,7 @@ async fn main() {
 
     ARGS.set(args.clone()).unwrap();
 
-    // Concurrency semaphore: defaults to the number of CPU cores; `--max-concurrency 0` means unlimited
+    // Concurrency semaphore: 0 uses the number of CPU cores (the default).
     let concurrency = if args.max_concurrency == 0 {
         std::thread::available_parallelism()
             .map(|v| v.get())
