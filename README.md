@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/brand/banner-dark.png">
-    <img src="docs/assets/brand/banner-light.png" alt="KaptchaOCR — CAPTCHA recognition, detection and slide matching in Rust" width="100%">
-  </picture>
+  <img src="docs/assets/brand/hero-banner.png" alt="KaptchaOCR — CAPTCHA recognition, detection and slide matching in Rust" width="100%">
 </p>
 
 <p align="center">
@@ -23,91 +20,92 @@
   <a href="docs/README.md">Docs</a>
 </p>
 
-**KaptchaOCR** is a Rust library and API server for CAPTCHA recognition:
-text OCR, glyph detection for click challenges, and slider matching. It ships
-as a single static binary — no OpenCV, no Python runtime on the server side —
-and exposes REST, Swagger and MCP from the same process.
+**KaptchaOCR** reads text CAPTCHAs, finds the character boxes used by click
+CAPTCHAs, and solves slider puzzles. It is a Rust library and a small server in
+one binary. You can run it locally, call it over HTTP, or use the Python client.
 
-Bundled models work out of the box; a manifest lets you swap in any ONNX
-recognizer or detector. Fine-tuned tiers take recognition from **14–15% to
-90.7%** exact match and glyph detection to **95.8% F1@0.5** on held-out data.
+No Python is needed on the server. The included models work out of the box, and
+you can load your own ONNX models with a simple model list.
+
+## What it can do — and what it can't
+
+**It can:**
+- Read text and math CAPTCHAs.
+- Find the characters for "click the letters in order" CAPTCHAs.
+- Solve slider puzzles and make a drag path.
+- Run as a local HTTP server, or use the Rust library or Python client.
+
+**It can't do this yet:**
+- It does **not** solve CAPTCHAs that ask you to pick pictures of cars, trucks,
+  buses, traffic lights, or other objects. That is a different job and is
+  future work. It is not included in this repo yet.
 
 ## Features
 
-| Capability | What it does |
+| What | Details |
 | --- | --- |
-| **Text OCR** | Charset-constrained CTC decoding; 8 models across 3 size tiers |
-| **Glyph detection** | Per-character boxes for click CAPTCHAs, with two fine-tuned detectors |
-| **Slider matching** | Template + gap comparison, plus reproducible human-like drag trajectories |
-| **Solve endpoints** | `/solve` for text/math, `/solve/click`, `/slide/solve` |
-| **Server** | REST + MCP, Swagger UI, API key, rate limiting, concurrency control |
-| **Deploy** | Static binary, Docker image, embedded models or a model manifest |
+| Text OCR | Reads letters and numbers. You can limit which characters it looks for. |
+| Click CAPTCHAs | Finds the character boxes and puts the clicks in the prompt order. |
+| Slider puzzles | Finds the gap and can make a drag path. |
+| Server | One binary with an HTTP API, API docs, MCP for AI agents, API keys and rate limits. |
+| Models | Included models, plus a model list for your own ONNX files. |
+| Python client | Small client with no extra dependencies. |
 
 ## Benchmarks
 
-Held-out recognition on **4,399 images** (six image-disjoint test sets) and
-glyph detection on a fresh **400-image** synthetic split (1,800 boxes).
+We tested the models on **4,399 CAPTCHA images they had not seen before**, and on
+**400 generated images** for character detection.
 
 | | ddddocr | PP-OCRv6 base | KaptchaOCR fine-tuned |
 | --- | ---: | ---: | ---: |
-| Recognition exact match | 14–15% | 8.9–28.6% | **67.0–90.7%** |
-| Detection F1@0.5 | 57.5% | 12.2–32.0%* | **95.7–95.8%** |
-| Best speed/accuracy | — | tiny: 8.9% @ 10 ms | **ft-tiny: 67.0% @ 10 ms** |
+| Gets the whole string right | 14–15% | 8.9–28.6% | **67.0–90.7%** |
+| Character boxes found correctly | 57.5% | 12.2–32.0%* | **95.7–95.8%** |
+| Quick pick | — | tiny: 8.9% at 10 ms | **ft-tiny: 67.0% at 10 ms** |
 
-<sub>Note: PP-OCRv6 detectors are line-level and scored against glyph-level ground truth, so the number is not a drop-in comparison.</sub>
+<sub>Note: PP-OCRv6 detectors put one box around a whole line, not one box per character, so they score low here.</sub>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/benchmarks/rec_exact_heatmap_dark.png">
-    <img src="docs/assets/benchmarks/rec_exact_heatmap_light.png" alt="Exact-match accuracy by recognition model and held-out test set" width="100%">
-  </picture>
+  <img src="docs/assets/benchmarks/rec_exact_heatmap_light.png" alt="Recognition accuracy by model and test set" width="100%">
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/benchmarks/det_f1_dark.png">
-    <img src="docs/assets/benchmarks/det_f1_light.png" alt="Glyph detection F1 at IoU 0.5 and 0.75" width="100%">
-  </picture>
+  <img src="docs/assets/benchmarks/det_f1_light.png" alt="Character detection F1 at IoU 0.5 and 0.75" width="100%">
 </p>
 
-[Full benchmark tables, per-set results, latency charts and methodology →](benchmarks/README.md)
+[Full results, tables, charts and method →](benchmarks/README.md)
 
 ## Quick start
 
-### Docker (recommended)
+### Docker
 
-The image compiles the binary inside its build stage, so the host only needs
-Docker — no Rust toolchain. First build takes ~10 minutes; later runs are
-instant.
+The image builds the binary inside Docker, so you only need Docker. The first
+build takes about 10 minutes.
 
 ```sh
 docker build -t kaptchaocr .
 docker run --rm -p 8000:8000 kaptchaocr
 ```
 
-The container defaults to OCR + detection + slider with the `balanced` profile.
-See [Docker](docs/docker.md) for mounts, API keys and tier overrides.
+This starts the server at `http://127.0.0.1:8000` with OCR, detection and
+sliders on. See [Docker](docs/docker.md) for API keys, mounts and model presets.
 
-### Native binary
+### With Rust
 
 ```sh
 cargo build --release
-make run          # = ./target/release/kaptchaocr --ocr --det --slide \
-                  #     --manifest model/models.json --profile balanced
+make run
 ```
 
-```sh
-make run PROFILE=accurate    # or fast
-make run ADDR=0.0.0.0:8000   # expose on the network
-make help
-```
+`make run` uses the balanced `ft-small` model. Use `PROFILE=fast` for the
+smallest model or `PROFILE=accurate` for the largest. You can also change the
+address with `ADDR=0.0.0.0:8000`.
 
 ### Prebuilt binary
 
-Platform `*-inline.zip` archives (static binary with the stock models embedded)
-will be attached to the first GitHub release.
+When the first release is out, download the `*-inline.zip` for your system. It
+contains one binary with the stock models built in.
 
-### Verify
+### Check that it works
 
 ```sh
 curl http://127.0.0.1:8000/status
@@ -152,84 +150,82 @@ println!("{text}");
 
 ## Models
 
-| Family | Tasks | Tiers | Size | Role |
-| --- | --- | --- | ---: | --- |
-| ddddocr (MIT) | rec + det | v2, legacy, stock det | 13–52 MB | Bundled fallback |
-| PP-OCRv6 (Apache-2.0) | rec + det | tiny / small / medium | 1.7–73 MB | Base reference models |
-| KaptchaOCR fine-tuned | rec + det | tiny / small / medium; det small / medium | 4.3–73 MB | `fast` / `balanced` / `accurate` profiles |
+| Family | What it is | Sizes | Use |
+| --- | --- | ---: | --- |
+| ddddocr (MIT) | Stock recognition and detection models | 13–52 MB | Included fallback |
+| PP-OCRv6 (Apache-2.0) | General recognition and detection models | 1.7–73 MB | Base models |
+| KaptchaOCR fine-tuned | Models trained on CAPTCHA images | 4.3–73 MB | `fast` / `balanced` / `accurate` |
 
 ```sh
-# pick a tier
+# pick a speed/accuracy preset
 kaptchaocr --ocr --manifest model/models.json --profile fast
 
-# click captchas: glyph detector + recognizer
+# click CAPTCHAs: character detector + recognizer
 kaptchaocr --ocr --det --manifest model/models.json \
   --det-model ft-small-det --rec-model ft-small
 ```
 
-Manifest format, custom ONNX import and model licenses: [Models](docs/models.md).
+The balanced preset is the default. You can add your own ONNX models through
+the model list. See [Models](docs/models.md).
 
 ## Documentation
 
-| Guide | Contents |
+| Guide | What is inside |
 | --- | --- |
 | [HTTP API](docs/api.md) | All routes, request/response shapes, uploads, errors |
-| [OCR](docs/ocr.md) | Charsets, color filters, probability output |
-| [Detection](docs/detection.md) | Glyph boxes and click-captcha detection |
+| [OCR](docs/ocr.md) | Character ranges, color filters, probability output |
+| [Detection](docs/detection.md) | Character boxes for click CAPTCHAs |
 | [Slider](docs/slider.md) | Template and gap matching |
 | [Solve API](docs/solve.md) | Text/math, slider and click solving |
-| [Models](docs/models.md) | Models, manifest, profiles, custom import |
-| [MCP](docs/mcp.md) | MCP tools and JSON-RPC examples |
+| [Models](docs/models.md) | Included models, presets, custom ONNX files |
+| [MCP](docs/mcp.md) | MCP tools for AI agents |
 | [Docker](docs/docker.md) | Image build, mounts, overrides |
 | [Building](docs/building.md) | Source builds, feature flags, linking |
-| [CLI](docs/cli.md) | Full flag reference |
+| [CLI](docs/cli.md) | Full command-line reference |
 | [Python client](docs/python-client.md) | `kaptchaocr.Client` API |
-| [Benchmarks](benchmarks/README.md) | Results, charts, methodology |
-| [Troubleshooting](docs/troubleshooting.md) | CUDA, ORT and static-linking issues |
-| [Developer guide](developer-guide.md) | Architecture and code map |
+| [Benchmarks](benchmarks/README.md) | Results, charts, method |
+| [Troubleshooting](docs/troubleshooting.md) | CUDA, ONNX Runtime and linking issues |
+| [Developer guide](developer-guide.md) | Code map and internals |
 
 ## How it works
 
+You send an image. The server prepares it, runs the right model, and turns the
+result into text, character boxes, or click points.
+
 ```mermaid
 flowchart LR
-    I[Image] --> P[Preprocess]
-    P --> T{Task}
-    T -->|OCR| R[Recognition ONNX]
-    T -->|Click| D[Detection ONNX] --> C[Recognize glyphs] --> O[Order by prompt]
-    T -->|Slider| S[Template / gap matching]
-    R --> J[Text / math answer]
+    I[Image] --> P[Prepare image]
+    P --> T{What do you need?}
+    T -->|Text| R[Read text]
+    T -->|Click| D[Find characters] --> O[Order the clicks]
+    T -->|Slider| S[Find the gap]
+    R --> J[Answer]
     O --> J
     S --> J
 ```
 
-Models are ONNX Runtime sessions; preprocessing, charset decoding and
-postprocessing live in the Rust library. The server adds routing, auth, rate
-limits, concurrency control and the MCP adapter.
+The models are ONNX files. The Rust code handles image preparation, character
+decoding and the click/slider logic. The server adds the HTTP routes, API key,
+rate limits, queue and MCP.
 
 ## Project status
 
-The library, models and benchmarks are complete. First public release
-packaging — GitHub release binaries, GHCR image, PyPI client, Hugging Face
-models — is in progress. Until the first tag, pin a commit for production.
+The library and models are ready. Release packages are being prepared: GitHub
+downloads, a Docker image, a PyPI client and Hugging Face models. Until those
+are out, build from source or use Docker.
 
 ## Contributing
 
-```sh
-make test     # 55 library tests, both feature configs
-make check    # fmt + clippy, both configs
-```
-
-Issues and PRs are welcome. For architecture, test layout and the code map,
-read the [developer guide](developer-guide.md).
+Run `make test` and `make check` before opening a PR. Issues and PRs are
+welcome. For the code layout, read the [developer guide](developer-guide.md).
 
 ## Acknowledgements
 
-- [ddddocr](https://github.com/sml2h3/ddddocr) — the bundled stock recognition
-  and detection models, and the original implementation this project is based
-  on. MIT licensed; the required notice is reproduced in
-  [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+- [ddddocr](https://github.com/sml2h3/ddddocr) — the included stock models, and
+  the original implementation this project is based on. MIT licensed; the notice
+  is in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
 - [PaddleOCR / PP-OCRv6](https://github.com/PaddlePaddle/PaddleOCR) — the base
-  detection/recognition models used for the fine-tuned tiers. Apache-2.0.
+  models used for the fine-tuned models. Apache-2.0.
 
 ## License
 

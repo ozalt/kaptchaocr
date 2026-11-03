@@ -30,3 +30,9 @@ These pages cover the details.
   `/ocr` and `/solve` need `--ocr` (or `--old`), `/det` needs `--det`,
   `/slide/*` needs `--slide`, `/solve/click` needs both `--ocr` and `--det`,
   `/mcp` needs `--mcp` (or `--only-mcp`).
+
+## Scope
+
+KaptchaOCR handles text CAPTCHAs, character-click CAPTCHAs and sliders. It does
+not pick pictures of cars, trucks, traffic lights or other objects. That kind of
+CAPTCHA is future work and is not supported yet.
