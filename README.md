@@ -67,6 +67,15 @@ We tested the models on **4,399 CAPTCHA images they had not seen before**, and o
 
 [Full results, tables, charts and method →](benchmarks/README.md)
 
+## Datasets
+
+The synthetic detection set — 20,000 training images plus the 400-image
+benchmark split — is public on Hugging Face:
+[`zaltahir/kaptchaocr-det`](https://huggingface.co/datasets/zaltahir/kaptchaocr-det).
+
+The recognition set is curated from public sources with mixed licenses, so its
+images are not redistributed here.
+
 ## Quick start
 
 ### Docker
