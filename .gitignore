@@ -11,9 +11,6 @@ __pycache__/
 # Generated debug outputs (src/lib.rs debug helpers / examples)
 /output*.jpg
 
-# Third-party PP-OCRv6 stock exports (not needed for builds; fetch/mount
-# separately — see model/README.md and the Docker section of README.md)
-/model/ppocrv6
 
 # OS junk
 .DS_Store
