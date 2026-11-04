@@ -26,7 +26,7 @@ These pages cover the details.
 - Images in JSON requests are **standard base64 strings** (no `data:` prefix).
 - The server returns `{"code": 200, "msg": "success", "data": ...}` on success.
 - Feature-gated routes only exist when the matching flag is enabled:
-  `/ocr` and `/solve` need `--ocr` (or `--old`), `/det` needs `--det`,
+  `/ocr` and `/solve` need `--ocr`, `/det` needs `--det`,
   `/slide/*` needs `--slide`, `/solve/click` needs both `--ocr` and `--det`,
   `/mcp` needs `--mcp` (or `--only-mcp`).
 

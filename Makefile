@@ -13,7 +13,7 @@ ADDR    ?= 127.0.0.1:8000
 help: ## show this help
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
 
-build: ## build the release binary (stock models embedded)
+build: ## build the release binary (fine-tuned models embedded)
 	cargo build --release
 
 run: build ## run the server locally (PROFILE=…, ADDR=host:port)

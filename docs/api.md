@@ -19,9 +19,9 @@ kaptchaocr --address 127.0.0.1:8000 --ocr --det --slide \
 | `/metrics` | GET | always | Prometheus text metrics |
 | `/docs` | GET | always | Swagger UI |
 | `/docs.json` | GET | always | OpenAPI document |
-| `/ocr` | POST | `--ocr` / `--old` | Recognize one image |
-| `/ocr/upload` | POST | `--ocr` / `--old` | Same, as `multipart/form-data` |
-| `/solve` | POST | `--ocr` / `--old` | OCR + arithmetic answer |
+| `/ocr` | POST | `--ocr` | Recognize one image |
+| `/ocr/upload` | POST | `--ocr` | Same, as `multipart/form-data` |
+| `/solve` | POST | `--ocr` | OCR + arithmetic answer |
 | `/det` | POST | `--det` | Bounding boxes |
 | `/det/upload` | POST | `--det` | Same, as `multipart/form-data` |
 | `/solve/click` | POST | `--ocr --det` | Click-captcha points in prompt order |

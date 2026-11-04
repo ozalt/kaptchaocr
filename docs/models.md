@@ -1,32 +1,41 @@
 # Models
 
-KaptchaOCR ships three model families and can load arbitrary ONNX recognizers
-and detectors through a manifest.
+KaptchaOCR ships five fine-tuned models and can load arbitrary ONNX
+recognizers and detectors through a manifest.
 
 ## What is bundled
 
-| Family | Task | Tiers | Size | Notes |
-| --- | --- | --- | ---: | --- |
-| ddddocr (MIT) | recognition | v2, legacy | 52 / 13 MB | Stock `stock_common` / `stock_old`; embedded fallback |
-| ddddocr (MIT) | detection | stock | 19 MB | `stock_det`; embedded fallback |
-| PP-OCRv6 (Apache-2.0) | recognition | tiny / small / medium | 4.3 / 20 / 73 MB | Base models; reference points |
-| PP-OCRv6 (Apache-2.0) | detection | tiny / small / medium | 1.7 / 9.4 / 59 MB | Line-level detectors |
-| KaptchaOCR fine-tuned | recognition | tiny / small / medium | 4.3 / 20 / 73 MB | `ft-tiny` / `ft-small` / `ft-medium` |
-| KaptchaOCR fine-tuned | detection | small / medium | 9.5 / 59 MB | `ft-small-det` / `ft-medium-det`; glyph-level |
+| Model | Task | Size | Notes | Hugging Face |
+| --- | --- | ---: | --- | --- |
+| `ft-tiny` | recognition | 4.3 MB | `fast` preset | [tiny-rec](https://huggingface.co/zaltahir/kaptchaocr-tiny-rec) |
+| `ft-small` | recognition | 20 MB | `balanced` preset (default) | [small-rec](https://huggingface.co/zaltahir/kaptchaocr-small-rec) |
+| `ft-medium` | recognition | 73 MB | `accurate` preset | [medium-rec](https://huggingface.co/zaltahir/kaptchaocr-medium-rec) |
+| `ft-small-det` | glyph detection | 9.5 MB | click CAPTCHAs | [small-det](https://huggingface.co/zaltahir/kaptchaocr-small-det) |
+| `ft-medium-det` | glyph detection | 59 MB | click CAPTCHAs, tighter boxes | [medium-det](https://huggingface.co/zaltahir/kaptchaocr-medium-det) |
 
-The fine-tuned models are PP-OCRv6 models fine-tuned on a CAPTCHA dataset and
-exported to ONNX. The base `model/ppocrv6/` files are **gitignored** — see
-[`model/README.md`](../model/README.md) for download/export notes.
+Every model has its own repo in the
+[KaptchaOCR collection](https://huggingface.co/collections/zaltahir/kaptchaocr).
+
+The recognition models are PP-OCRv6 models fine-tuned on CAPTCHA images and
+exported to ONNX. The detectors are PaddleOCR-style DB models trained for
+glyph-level boxes. Everything lives in [`model/finetuned/`](../model/finetuned);
+see [`model/README.md`](../model/README.md) for the manifest and export notes.
+
+The ddddocr and PP-OCRv6 base weights in the benchmarks are comparison models
+only and are **not** included in this repo.
 
 ## Profiles
 
-`model/models.json` defines three profiles:
+`model/models.json` defines three recognition profiles:
 
-| Profile | Recognition | Detection |
-| --- | --- | --- |
-| `fast` | `ft-tiny` | `stock-det` |
-| `balanced` | `ft-small` | `stock-det` |
-| `accurate` | `ft-medium` | `stock-det` |
+| Profile | Recognition |
+| --- | --- |
+| `fast` | `ft-tiny` |
+| `balanced` | `ft-small` |
+| `accurate` | `ft-medium` |
+
+Detection is selected separately; the first det entry — and therefore the
+default — is `ft-small-det`.
 
 For click captchas, select the glyph detector explicitly:
 
@@ -35,9 +44,10 @@ kaptchaocr --ocr --det --manifest model/models.json \
   --rec-model ft-small --det-model ft-small-det
 ```
 
-Without `--manifest`, the server uses the embedded stock models. With a
-manifest, `--profile`, `--rec-model` and `--det-model` select entries; the
-explicit model flags take precedence over the profile.
+Without `--manifest`, the server uses the embedded `ft-small` recognizer and
+`ft-small-det` detector. With a manifest, `--profile`, `--rec-model` and
+`--det-model` select entries; the explicit model flags take precedence over the
+profile.
 
 ## Manifest format
 
@@ -83,17 +93,18 @@ Held-out benchmark, 4,399 recognition images / 400 detection images:
 | `ft-medium` | rec | exact match | **90.7%** |
 | `ft-small` | rec | exact match | **80.4%** |
 | `ft-tiny` | rec | exact match | **67.0%** |
-| PP-OCRv6 medium (base) | rec | exact match | 28.6% |
-| ddddocr v2 / legacy | rec | exact match | 14.3 / 15.3% |
 | `ft-small-det` | det | F1@0.5 | **95.8%** |
 | `ft-medium-det` | det | F1@0.5 / F1@0.75 | 95.7% / **63.1%** |
-| `ddddocr det` | det | F1@0.5 | 57.5% |
+| PP-OCRv6 medium (base, not bundled) | rec | exact match | 28.6% |
+| ddddocr v2 / legacy (not bundled) | rec | exact match | 14.3 / 15.3% |
+| ddddocr det (not bundled) | det | F1@0.5 | 57.5% |
 
 Full tables, per-set results and latency: [Benchmarks](../benchmarks/README.md).
 
 ## Licenses
 
-The stock models and portions of the original implementation are from
-[ddddocr](https://github.com/sml2h3/ddddocr) under the MIT license. PP-OCRv6
-base models are Apache-2.0. The required notices are in
+The fine-tuned models and code are Apache-2.0. They are derived from PP-OCRv6
+base models (Apache-2.0). Portions of the original implementation are from
+[ddddocr](https://github.com/sml2h3/ddddocr) under the MIT license; its stock
+weights are not redistributed. The required notices are in
 [`THIRD_PARTY_LICENSES.md`](../THIRD_PARTY_LICENSES.md).

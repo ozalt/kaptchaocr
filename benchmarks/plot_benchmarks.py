@@ -29,7 +29,6 @@ import numpy as np
 from matplotlib.patches import Patch
 
 ROOT = Path(__file__).resolve().parents[1]
-LIB = ROOT
 RES = ROOT / "benchmarks" / "results"
 OUT = ROOT / "docs" / "assets" / "benchmarks"
 OUT.mkdir(parents=True, exist_ok=True)
@@ -74,17 +73,6 @@ REC_FAMILY = {
     "ft-small": "KaptchaOCR fine-tuned",
     "ft-medium": "KaptchaOCR fine-tuned",
 }
-REC_FILE = {
-    "stock-common": "model/stock_common.onnx",
-    "stock-old": "model/stock_old.onnx",
-    "base-tiny": "model/ppocrv6/tiny_rec.onnx",
-    "base-small": "model/ppocrv6/small_rec.onnx",
-    "base-medium": "model/ppocrv6/medium_rec.onnx",
-    "ft-tiny": "model/finetuned/tiny_rec.onnx",
-    "ft-small": "model/finetuned/small_rec.onnx",
-    "ft-medium": "model/finetuned/medium_rec.onnx",
-}
-
 DET_LABEL = {
     "stock-det": "ddddocr det",
     "ppocrv6-tiny-det": "PP-OCRv6 tiny",
@@ -101,15 +89,6 @@ DET_FAMILY = {
     "ft-small-det": "KaptchaOCR fine-tuned",
     "ft-medium-det": "KaptchaOCR fine-tuned",
 }
-DET_FILE = {
-    "stock-det": "model/stock_det.onnx",
-    "ppocrv6-tiny-det": "model/ppocrv6/tiny_det.onnx",
-    "ppocrv6-small-det": "model/ppocrv6/small_det.onnx",
-    "ppocrv6-medium-det": "model/ppocrv6/medium_det.onnx",
-    "ft-small-det": "model/finetuned/small_det.onnx",
-    "ft-medium-det": "model/finetuned/medium_det.onnx",
-}
-
 FAMILIES = ["ddddocr", "PP-OCRv6 base", "KaptchaOCR fine-tuned"]
 COLORS = {
     "light": {
@@ -146,11 +125,6 @@ THEMES = {
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="") as f:
         return list(csv.DictReader(f))
-
-
-def model_mb(rel: str) -> float:
-    path = LIB / rel
-    return path.stat().st_size / (1024 * 1024) if path.exists() else 0.0
 
 
 def summary_sizes(path: Path) -> dict[str, float]:
@@ -254,7 +228,7 @@ def load_rec():
             "exact": sum(float(data[s][m]["exact"]) * int(data[s][m]["n"]) for s in SPLITS) / n,
             "char": sum(float(data[s][m]["char"]) * int(data[s][m]["n"]) for s in SPLITS) / n,
             "mean_ms": sum(float(data[s][m]["mean_ms"]) * int(data[s][m]["n"]) for s in SPLITS) / n,
-            "size_mb": sizes.get(m, model_mb(REC_FILE[m])),
+            "size_mb": sizes.get(m, 0.0),
         }
     return data, overall
 
@@ -273,7 +247,7 @@ def load_det():
             "mean_ms": float(r["mean_ms"]),
             "images": int(r["images"]),
             "gt_boxes": int(r["gt_boxes"]),
-            "size_mb": sizes.get(r["model"], model_mb(DET_FILE[r["model"]])),
+            "size_mb": sizes.get(r["model"], 0.0),
         }
     return data
 

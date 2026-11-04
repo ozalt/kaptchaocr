@@ -7,12 +7,12 @@ pub mod manifest;
 pub mod math;
 pub mod trajectory;
 
-/// Initialize content recognition.
+/// Initialize content recognition with the default fine-tuned model (`ft-small`).
 #[cfg(feature = "inline-model")]
 pub fn kaptchaocr_classification() -> anyhow::Result<KaptchaOcr<'static>> {
     KaptchaOcr::new(
-        include_bytes!("../model/stock_common.onnx"),
-        serde_json::from_str(include_str!("../model/stock_common.json")).unwrap(),
+        include_bytes!("../model/finetuned/small_rec.onnx"),
+        serde_json::from_str(include_str!("../model/finetuned/small_rec.json")).unwrap(),
     )
 }
 
@@ -22,75 +22,37 @@ pub fn kaptchaocr_classification_with_num_threads(
     num_threads: usize,
 ) -> anyhow::Result<KaptchaOcr<'static>> {
     KaptchaOcr::new_with_num_threads(
-        include_bytes!("../model/stock_common.onnx"),
-        serde_json::from_str(include_str!("../model/stock_common.json")).unwrap(),
+        include_bytes!("../model/finetuned/small_rec.onnx"),
+        serde_json::from_str(include_str!("../model/finetuned/small_rec.json")).unwrap(),
         num_threads,
     )
 }
 
-/// Initialize content recognition.
+/// Initialize content recognition with the default fine-tuned model.
 #[cfg(not(feature = "inline-model"))]
 pub fn kaptchaocr_classification() -> anyhow::Result<KaptchaOcr<'static>> {
     KaptchaOcr::new(
-        std::fs::read("model/stock_common.onnx")?,
-        serde_json::from_str(&std::fs::read_to_string("model/stock_common.json")?)?,
+        std::fs::read("model/finetuned/small_rec.onnx")?,
+        serde_json::from_str(&std::fs::read_to_string("model/finetuned/small_rec.json")?)?,
     )
 }
 
-/// Initialize content recognition.
+/// Initialize content recognition with the default fine-tuned model on CUDA.
 #[cfg(feature = "cuda")]
 pub fn kaptchaocr_classification_cuda(device_id: i32) -> anyhow::Result<KaptchaOcr<'static>> {
     KaptchaOcr::new_cuda(
-        include_bytes!("../model/stock_common.onnx"),
-        serde_json::from_str(include_str!("../model/stock_common.json")).unwrap(),
+        include_bytes!("../model/finetuned/small_rec.onnx"),
+        serde_json::from_str(include_str!("../model/finetuned/small_rec.json")).unwrap(),
         device_id,
     )
 }
 
-/// Initialize content recognition with the legacy model.
-#[cfg(feature = "inline-model")]
-pub fn kaptchaocr_classification_old() -> anyhow::Result<KaptchaOcr<'static>> {
-    KaptchaOcr::new(
-        include_bytes!("../model/stock_old.onnx"),
-        serde_json::from_str(include_str!("../model/stock_old.json")).unwrap(),
-    )
-}
-
-/// Initialize content recognition with the legacy model and set the ORT `IntraOpNumThreads`.
-#[cfg(feature = "inline-model")]
-pub fn kaptchaocr_classification_old_with_num_threads(
-    num_threads: usize,
-) -> anyhow::Result<KaptchaOcr<'static>> {
-    KaptchaOcr::new_with_num_threads(
-        include_bytes!("../model/stock_old.onnx"),
-        serde_json::from_str(include_str!("../model/stock_old.json")).unwrap(),
-        num_threads,
-    )
-}
-
-/// Initialize content recognition with the legacy model.
-#[cfg(not(feature = "inline-model"))]
-pub fn kaptchaocr_classification_old() -> anyhow::Result<KaptchaOcr<'static>> {
-    KaptchaOcr::new(
-        std::fs::read("model/stock_old.onnx")?,
-        serde_json::from_str(&std::fs::read_to_string("model/stock_old.json")?)?,
-    )
-}
-
-/// Initialize content recognition with the legacy model.
-#[cfg(feature = "cuda")]
-pub fn kaptchaocr_classification_old_cuda(device_id: i32) -> anyhow::Result<KaptchaOcr<'static>> {
-    KaptchaOcr::new_cuda(
-        include_bytes!("../model/stock_old.onnx"),
-        serde_json::from_str(include_str!("../model/stock_old.json")).unwrap(),
-        device_id,
-    )
-}
-
-/// Initialize object detection.
+/// Initialize object detection with the default fine-tuned detector (`ft-small-det`).
 #[cfg(feature = "inline-model")]
 pub fn kaptchaocr_detection() -> anyhow::Result<KaptchaOcr<'static>> {
-    KaptchaOcr::new_model(include_bytes!("../model/stock_det.onnx"))
+    let mut model = KaptchaOcr::new_model(include_bytes!("../model/finetuned/small_det.onnx"))?;
+    model.set_det_type(DetType::Db);
+    Ok(model)
 }
 
 /// Initialize object detection and set the ORT `IntraOpNumThreads`.
@@ -98,19 +60,31 @@ pub fn kaptchaocr_detection() -> anyhow::Result<KaptchaOcr<'static>> {
 pub fn kaptchaocr_detection_with_num_threads(
     num_threads: usize,
 ) -> anyhow::Result<KaptchaOcr<'static>> {
-    KaptchaOcr::new_model_with_num_threads(include_bytes!("../model/stock_det.onnx"), num_threads)
+    let mut model = KaptchaOcr::new_model_with_num_threads(
+        include_bytes!("../model/finetuned/small_det.onnx"),
+        num_threads,
+    )?;
+    model.set_det_type(DetType::Db);
+    Ok(model)
 }
 
-/// Initialize object detection.
+/// Initialize object detection with the default fine-tuned detector.
 #[cfg(not(feature = "inline-model"))]
 pub fn kaptchaocr_detection() -> anyhow::Result<KaptchaOcr<'static>> {
-    KaptchaOcr::new_model(std::fs::read("model/stock_det.onnx")?)
+    let mut model = KaptchaOcr::new_model(std::fs::read("model/finetuned/small_det.onnx")?)?;
+    model.set_det_type(DetType::Db);
+    Ok(model)
 }
 
-/// Initialize object detection.
+/// Initialize object detection with the default fine-tuned detector on CUDA.
 #[cfg(feature = "cuda")]
 pub fn kaptchaocr_detection_cuda(device_id: i32) -> anyhow::Result<KaptchaOcr<'static>> {
-    KaptchaOcr::new_model_cuda(include_bytes!("../model/stock_det.onnx"), device_id)
+    let mut model = KaptchaOcr::new_model_cuda(
+        include_bytes!("../model/finetuned/small_det.onnx"),
+        device_id,
+    )?;
+    model.set_det_type(DetType::Db);
+    Ok(model)
 }
 
 /// Slider matching.
@@ -358,11 +332,14 @@ pub fn is_diy<MODEL>(model: MODEL) -> bool
 where
     MODEL: AsRef<[u8]>,
 {
-    // compare the sha256 of stock_common.onnx and stock_old.onnx
+    // SHA-256 of the bundled fine-tuned models.
     let sha256 = sha256::digest(model.as_ref());
 
-    sha256 != "33b5cd351ee94e73a6bf8fa18c415ed8b819b3ffd342e267c30d8ad8334e34e8"
-        && sha256 != "b8f2ad9cbc1f2e3922a6cb9459e30824e7e2467f3fb4fd61420640e34ea0bf68"
+    sha256 != "1421f20a9f67a124b88bb57c6a797de251a68282933689143e743b96e2d07cc7"
+        && sha256 != "45625442b7083d0cd96abb229ac7d3ec9182cbcffb5629cf6105f55f580ead04"
+        && sha256 != "3dcf9aa37c1e8fd8c7c4e909d55e242577f4180963c08ef5787b9c7958f1aa8a"
+        && sha256 != "136eb567f409b1141b3ff8a1da1e175730a790c9736cac879e8ba36ddbe5cdcd"
+        && sha256 != "be9b9d84073d689b0682813e0327ffd228776aa6e8551b270d429427eaad2935"
 }
 
 /// Scan rotation angles in -15°..=15°, using horizontal-projection variance to measure "how upright" the text is; returns the best rotation angle (radians).
@@ -429,8 +406,8 @@ fn png_rgba_black_preprocess(image: &image::DynamicImage) -> image::DynamicImage
 
 /// Configuration needed for content recognition.
 ///
-/// Example charset configs: `../model/stock_common.json`,
-/// `../model/stock_old.json`.
+/// Example charset configs: `../model/finetuned/small_rec.json`,
+/// `../model/finetuned/medium_rec.json`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Charset {
     /// Whether this is a cnn model.
@@ -641,7 +618,7 @@ const STRIDES: [u32; 3] = [8, 16, 32];
 /// Output decoding type of the object detection model.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum DetType {
-    /// Anchor-grid decoding (YOLOv5 style, kaptchaocr's bundled `stock_det`).
+    /// Anchor-grid decoding (YOLOv5 style) for custom detectors.
     #[default]
     Yolo,
     /// DB (Differentiable Binarization) probability-map decoding (PaddleOCR family).
@@ -3089,39 +3066,6 @@ mod tests {
     }
 
     #[test]
-    fn classification_old() {
-        let kaptchaocr = kaptchaocr_classification_old().unwrap();
-
-        println!(
-            "{}",
-            kaptchaocr
-                .classification(read_image("image/1.png"))
-                .unwrap()
-        );
-
-        println!(
-            "{}",
-            kaptchaocr
-                .classification(read_image("image/2.png"))
-                .unwrap()
-        );
-
-        println!(
-            "{}",
-            kaptchaocr
-                .classification(read_image("image/3.png"))
-                .unwrap()
-        );
-
-        println!(
-            "{}",
-            kaptchaocr
-                .classification(read_image("image/4.png"))
-                .unwrap()
-        );
-    }
-
-    #[test]
     fn classification_bbox() {
         let input = read_image("image/6.jpg");
         let kaptchaocr = kaptchaocr_detection().unwrap();
@@ -3712,31 +3656,31 @@ mod tests {
     }
 
     #[test]
-    fn manifest_loads_and_builds_stock_models() {
+    fn manifest_loads_and_builds_finetuned_models() {
         let m = crate::manifest::ModelManifest::load("model/models.json").unwrap();
         assert!(!m.models.is_empty());
 
         let rec = m
             .models
             .iter()
-            .find(|x| x.task == "rec" && x.name == "stock-common")
-            .expect("stock-common rec in manifest");
+            .find(|x| x.task == "rec" && x.name == "ft-small")
+            .expect("ft-small rec in manifest");
         let det = m
             .models
             .iter()
-            .find(|x| x.task == "det" && x.name == "stock-det")
-            .expect("stock-det det in manifest");
+            .find(|x| x.task == "det" && x.name == "ft-small-det")
+            .expect("ft-small-det det in manifest");
 
         let rec_model = rec.build().unwrap();
         let det_model = det.build().unwrap();
 
-        assert_eq!(det_model.det_type(), DetType::Yolo);
+        assert_eq!(det_model.det_type(), DetType::Db);
 
         let img = read_image("image/1.png");
         let text = rec_model
             .classification_with_options(img, false, None)
             .unwrap();
-        assert!(!text.is_empty(), "stock-common should recognize a sample");
+        assert!(!text.is_empty(), "ft-small should recognize a sample");
     }
 
     #[test]

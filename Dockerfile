@@ -2,7 +2,7 @@
 
 # ---------- build stage ----------
 # Alpine toolchain for a musl-linked release binary. The inline-model feature
-# embeds the stock models at compile time, so they must be present here.
+# embeds the fine-tuned models at compile time, so they must be present here.
 FROM rust:1.90.0-alpine AS builder
 
 RUN apk add --no-cache \
@@ -22,7 +22,8 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY initialize.json list.json ./
-COPY model/stock_common.onnx model/stock_common.json model/stock_old.onnx model/stock_old.json model/stock_det.onnx model/models.json ./model/
+COPY model/finetuned ./model/finetuned
+COPY model/models.json ./model/
 
 RUN cargo build --release --locked
 
@@ -35,7 +36,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/release/kaptchaocr /usr/local/bin/kaptchaocr
 COPY --from=builder /app/model ./model
-COPY model/finetuned ./model/finetuned
 
 EXPOSE 8000
 

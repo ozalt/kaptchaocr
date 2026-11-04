@@ -19,21 +19,21 @@ score for every box.
 
 ## Model choice
 
-Without a manifest, the server uses the bundled ddddocr detector
-(`stock_det.onnx`). For click captchas, use the glyph-level fine-tuned models:
+Without a manifest, the server uses the bundled `ft-small-det` glyph detector.
+For click captchas, select a detector explicitly:
 
 ```sh
 kaptchaocr --ocr --det --manifest model/models.json \
   --det-model ft-small-det --rec-model ft-small
 ```
 
-- `ft-small-det` — best speed/quality tradeoff; F1@0.5 **95.8%** on the
-  fresh 400-image benchmark at 270 ms/image.
+- `ft-small-det` — bundled default; best speed/quality tradeoff, F1@0.5
+  **95.8%** on the fresh 400-image benchmark at 270 ms/image.
 - `ft-medium-det` — same F1@0.5, stronger at IoU 0.75 (**63.1%** vs 50.5%),
   but ~5× slower.
-- `stock-det` — bundled fallback; 57.5% F1@0.5.
-- PP-OCRv6 base detectors are **line-level** models; they are not a drop-in
-  replacement for per-glyph click detection.
+- The ddddocr and PP-OCRv6 base detectors are comparison models only. Their
+  weights are not included, and PP-OCRv6 base detectors are line-level rather
+  than per-glyph.
 
 Numbers and charts: [Benchmarks](../benchmarks/README.md).
 

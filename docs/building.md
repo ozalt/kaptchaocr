@@ -15,20 +15,20 @@ make test         # library tests, both feature configs
 make check        # fmt + clippy, both feature configs
 ```
 
-The binary embeds the stock ddddocr models by default, so it runs without
-external model files.
+The binary embeds the fine-tuned `ft-small` and `ft-small-det` models by
+default, so it runs without external model files.
 
 ## Feature flags
 
 | Feature | Default | Effect |
 | --- | --- | --- |
-| `inline-model` | yes | Embed stock recognition/detection models in the binary |
+| `inline-model` | yes | Embed the fine-tuned recognition/detection models in the binary |
 | `download-binaries` | yes | Download a matching ONNX Runtime during build |
 | `load-dynamic` | no | Load a user-supplied ONNX Runtime at runtime |
 | `cuda` | no | Build with CUDA support (dynamic library only) |
 
-Without `inline-model`, the server reads `model/stock_common.onnx` and
-`model/stock_det.onnx` from disk.
+Without `inline-model`, the server reads `model/finetuned/small_rec.onnx` and
+`model/finetuned/small_det.onnx` from disk.
 
 ## Linking
 

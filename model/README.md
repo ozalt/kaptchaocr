@@ -4,12 +4,17 @@ Directory layout:
 
 | File | Purpose |
 | --- | --- |
-| `stock_common.onnx` + `stock_common.json` | Stock recognition model (custom PyTorch CRNN/CTC, grayscale, H=64). `stock_common.json` = Charset config (`word`, `image`, `channel`, `charset`, optional `mean`/`std`/`bgr`). |
-| `stock_old.onnx` + `stock_old.json` | Stock "old" recognition model (INT8-quantized variant). |
-| `stock_det.onnx` | Stock detection model (custom YOLOv5-style, 416×416, anchor grid). |
-| `ppocrv6/` | PP-OCRv6 ONNX exports (tiny/small/medium × rec/det). **Gitignored** — download from the [PP-OCRv6 collection](https://huggingface.co/collections/PaddlePaddle/pp-ocrv6) into this folder. |
-| `finetuned/` | Captcha-fine-tuned PP-OCRv6 ONNX: rec (tiny/small/medium) + charsets, and `{small,medium}_det.onnx` (glyph-level detectors for click captchas, manifest entries `ft-small-det` / `ft-medium-det`). Use the tier's `ppocrv6/<tier>_rec.json` charset (blank at index 0); training artifacts are kept in the private training workspace. |
+| `finetuned/tiny_rec.onnx` + `tiny_rec.json` | `ft-tiny` recognition model (`fast` preset). |
+| `finetuned/small_rec.onnx` + `small_rec.json` | `ft-small` recognition model (`balanced` preset, default). |
+| `finetuned/medium_rec.onnx` + `medium_rec.json` | `ft-medium` recognition model (`accurate` preset). |
+| `finetuned/small_det.onnx` | `ft-small-det` glyph-level detector for click CAPTCHAs. |
+| `finetuned/medium_det.onnx` | `ft-medium-det` glyph-level detector, tighter boxes but slower. |
 | `models.json` | Model manifest consumed by the server (`--manifest`) and the eval harness. Lets you wire arbitrary ONNX rec/det models without rebuilding. |
+
+The fine-tuned recognition models use the charset JSON next to them (blank at
+index 0). The detectors are PaddleOCR-style DB models. Training artifacts are
+kept in the private training workspace. The ddddocr and PP-OCRv6 base weights
+seen in the benchmarks are comparison models and are not redistributed here.
 
 ---
 
@@ -26,13 +31,11 @@ The manifest's **first `rec` entry** becomes the OCR model and the **first
 `det` entry** the detection model. Paths are relative to the working
 directory. `--rec-model <name>` picks a specific rec entry, `--det-model
 <name>` a specific det entry (`ft-small-det` / `ft-medium-det` are the
-glyph-level click-captcha fine-tunes: F1@0.5 ~95–97% on the synthetic scatter
-val sets vs 60.6% for `stock-det`; medium is ~4× slower with tighter boxes),
-and `--profile <name>` uses the manifest's `profiles` map
-(shipped: `fast` → `ft-tiny`, `balanced` → `ft-small`, `accurate` →
-`ft-medium`). With the canonical `model/models.json`, plain `--manifest`
-already serves the captcha-fine-tuned `ft-small`. `charset_range` works with
-the official models **and** with manifest/fine-tuned PP-OCRv6 (CTC) models:
+glyph-level click-captcha fine-tunes), and `--profile <name>` uses the
+manifest's `profiles` map (shipped: `fast` → `ft-tiny`, `balanced` →
+`ft-small`, `accurate` → `ft-medium`). With the canonical `model/models.json`,
+plain `--manifest` already serves the captcha-fine-tuned `ft-small`.
+`charset_range` works with manifest/fine-tuned PP-OCRv6 (CTC) models:
 the per-frame choice is restricted to the requested characters before the CTC
 merge, which is what `/solve/click` uses to constrain single-glyph
 recognition to the prompt's characters. For a DB (PaddleOCR-style) detector:
@@ -141,9 +144,7 @@ quantize_static("inference.onnx", "inference_qat.onnx", dr,
 EOF
 ```
 
-> `model/stock_old.onnx` is an example of a dynamic-INT8-quantized model
-> already in this repo (`onnx.quantize` producer). Validate accuracy with the
-> eval harness before/after shrinking:
+> Validate accuracy with the eval harness before/after shrinking:
 >
 > ```bash
 > cargo run --release --example eval -- --n 200 --lang both

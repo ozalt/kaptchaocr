@@ -186,16 +186,10 @@ async fn auth_and_rate_limit(
 }
 
 #[derive(Parser, Debug, Clone)]
-#[clap(
-    group(
-        ArgGroup::new("ocr_old")
-            .args(&["ocr", "old"])
-            .multiple(false)
-    ),
-    group(
-        ArgGroup::new("mcp_only_mcp")
-            .args(&["mcp", "only_mcp"])
-            .multiple(false)
+#[clap(group(
+    ArgGroup::new("mcp_only_mcp")
+        .args(&["mcp", "only_mcp"])
+        .multiple(false)
 ))]
 struct Args {
     /// Listen address.
@@ -210,13 +204,9 @@ struct Args {
     #[arg(long)]
     only_mcp: bool,
 
-    /// Enable content recognition; mutually exclusive with old.
+    /// Enable content recognition.
     #[arg(long)]
     ocr: bool,
-
-    /// Enable content recognition with the legacy model; mutually exclusive with ocr.
-    #[arg(long)]
-    old: bool,
 
     /// Enable object detection.
     #[arg(long)]
@@ -236,13 +226,13 @@ struct Args {
 
     /// Path to the content recognition model and its charset.
     /// If the inline-model feature is enabled (the default), you can ignore this option unless you want a custom model.
-    /// The model and charset paths must share the same base name, e.g. `model/stock_common.onnx` + `model/stock_common.json`.
-    #[arg(long, default_value_t = { "model/stock_common.onnx".to_string() })]
+    /// The model and charset paths must share the same base name, e.g. `model/finetuned/small_rec.onnx` + `model/finetuned/small_rec.json`.
+    #[arg(long, default_value_t = { "model/finetuned/small_rec.onnx".to_string() })]
     ocr_path: String,
 
     /// Path to the object detection model.
     /// If the inline-model feature is enabled (the default), you can ignore this option unless you want a custom model.
-    #[arg(long, default_value_t = { "model/stock_det.onnx".to_string() })]
+    #[arg(long, default_value_t = { "model/finetuned/small_det.onnx".to_string() })]
     det_path: String,
 
     /// Provide your domain to automatically obtain an SSL certificate,
@@ -289,7 +279,7 @@ struct Args {
     rec_model: Option<String>,
 
     /// Select a det model by name from the manifest (defaults to the first det entry),
-    /// e.g. --det-model ppocrv6-tiny-det.
+    /// e.g. --det-model ft-small-det.
     #[arg(long)]
     det_model: Option<String>,
 }
@@ -1179,7 +1169,7 @@ async fn route_status(res: &mut Response) {
     let args = ARGS.get().unwrap();
     let mut enabled_features = Vec::new();
 
-    if args.ocr || args.old {
+    if args.ocr {
         enabled_features.push("ocr".to_string());
     }
 
@@ -1301,7 +1291,7 @@ async fn handle_single_rpc(
                     tools.retain(|tool| {
                         let name = tool["name"].as_str().unwrap_or_default();
                         match name {
-                            "ocr" => args.ocr || args.old,
+                            "ocr" => args.ocr,
                             "det" => args.det,
                             "slide_match" | "slide_comparison" => args.slide,
                             _ => false,
@@ -1511,7 +1501,6 @@ fn default_error_handler(res: &mut Response) {
 struct Config {
     address: Option<String>,
     ocr: Option<bool>,
-    old: Option<bool>,
     det: Option<bool>,
     slide: Option<bool>,
     ocr_charset_range: Option<String>,
@@ -1564,7 +1553,6 @@ fn apply_config(mut args: Args) -> anyhow::Result<Args> {
 
     merge!(address);
     merge!(ocr);
-    merge!(old);
     merge!(det);
     merge!(slide);
     merge!(ocr_charset_range, Option);
@@ -1596,11 +1584,10 @@ async fn main() {
         )
         .init();
 
-    if !(args.ocr || args.old) && !args.det && !args.slide {
+    if !args.ocr && !args.det && !args.slide {
         warn!("no enabled features, default enabled all features");
 
         args.ocr = true;
-        args.old = true;
         args.det = true;
         args.slide = true;
     }
@@ -1669,7 +1656,7 @@ async fn main() {
         .push(Router::with_path("/healthz").get(route_healthz))
         .push(Router::with_path("/metrics").get(route_metrics));
 
-    if (args.ocr || args.old) && !args.only_mcp {
+    if (args.ocr) && !args.only_mcp {
         router = router
             .push(Router::with_path("/ocr").post(route_ocr))
             .push(Router::with_path("/ocr/upload").post(route_ocr_upload))
@@ -1683,7 +1670,7 @@ async fn main() {
     }
 
     // Click solving needs both a detector (boxes) and a recognizer (characters).
-    if args.det && (args.ocr || args.old) && !args.only_mcp {
+    if args.det && (args.ocr) && !args.only_mcp {
         router = router.push(Router::with_path("/solve/click").post(route_solve_click));
     }
 
@@ -1805,7 +1792,7 @@ fn init_from_manifest(manifest_path: &str, args: &Args) -> anyhow::Result<()> {
         .iter()
         .find(|m| m.task == "rec" && rec_name.as_deref().is_none_or(|name| m.name == name))
     {
-        if args.ocr || args.old {
+        if args.ocr {
             let mut model = entry.build()?;
 
             if let Some(v) = ocr_charset_range(args)? {
@@ -1863,23 +1850,8 @@ fn init_ocr(args: &Args) -> anyhow::Result<()> {
         OCR.set(kaptchaocr)
             .map_err(|_| anyhow::anyhow!("OCR already enabled"))?;
 
-        set_model_name("stock-common");
+        set_model_name("ft-small");
         info!("ocr enabled successfully");
-    } else if args.old {
-        let mut kaptchaocr = match num_threads {
-            Some(n) => kaptchaocr_classification_old_with_num_threads(n)?,
-            None => kaptchaocr_classification_old()?,
-        };
-
-        if let Some(v) = ocr_charset_range {
-            kaptchaocr.set_ranges(v)
-        };
-
-        OCR.set(kaptchaocr)
-            .map_err(|_| anyhow::anyhow!("OCR already enabled"))?;
-
-        set_model_name("stock-old");
-        info!("old enabled successfully");
     }
 
     if args.det {
@@ -1905,7 +1877,7 @@ fn init_ocr(args: &Args) -> anyhow::Result<()> {
 
     let ocr_charset_range = ocr_charset_range(args)?;
 
-    if args.ocr || args.old {
+    if args.ocr {
         let mut path = PathBuf::from(args.ocr_path.clone());
 
         let model = read(&path)?;
@@ -1938,11 +1910,7 @@ fn init_ocr(args: &Args) -> anyhow::Result<()> {
                 .unwrap_or("custom"),
         );
 
-        if args.ocr {
-            info!("ocr enabled successfully");
-        } else if args.old {
-            info!("old enabled successfully");
-        }
+        info!("ocr enabled successfully");
     }
 
     if args.det {

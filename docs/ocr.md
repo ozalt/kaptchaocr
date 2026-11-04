@@ -1,9 +1,8 @@
 # OCR recognition
 
 The recognizer handles single-line text: alphanumeric CAPTCHAs, mixed case,
-Chinese characters, and a range of special characters. The bundled model is
-ddddocr's stock recognizer; the fine-tuned PP-OCRv6 tiers are described in
-[Models](models.md).
+Chinese characters, and a range of special characters. The bundled default is
+`ft-small`; the other fine-tuned tiers are described in [Models](models.md).
 
 ```rust
 let image = std::fs::read("captcha.png").unwrap();
@@ -12,8 +11,8 @@ let text = ocr.classification(image).unwrap();
 println!("{text}");
 ```
 
-Use the legacy bundled model with `kaptchaocr_classification_old()`. To load a
-custom ONNX model + charset, see [Models](models.md#custom-models).
+Use `--rec-model` or the manifest to pick another tier. To load a custom ONNX
+model + charset, see [Models](models.md#custom-models).
 
 ## Transparent PNGs
 

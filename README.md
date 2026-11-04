@@ -5,7 +5,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
   <img alt="Rust stable" src="https://img.shields.io/badge/rust-stable-orange.svg">
-  <img alt="55 tests passing" src="https://img.shields.io/badge/tests-55%20passing-brightgreen.svg">
+  <img alt="54 tests passing" src="https://img.shields.io/badge/tests-54%20passing-brightgreen.svg">
   <img alt="Docker image kaptchaocr" src="https://img.shields.io/badge/docker-kaptchaocr-2496ED.svg">
   <img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9%2B-3776AB.svg">
   <a href="benchmarks/README.md"><img alt="Benchmarks on 4,399 images" src="https://img.shields.io/badge/benchmarks-4%2C399%20images-7c3aed.svg"></a>
@@ -105,7 +105,7 @@ address with `ADDR=0.0.0.0:8000`.
 ### Prebuilt binary
 
 When the first release is out, download the `*-inline.zip` for your system. It
-contains one binary with the stock models built in.
+contains one binary with the fine-tuned models built in.
 
 ### Check that it works
 
@@ -152,11 +152,18 @@ println!("{text}");
 
 ## Models
 
-| Family | What it is | Sizes | Use |
-| --- | --- | ---: | --- |
-| ddddocr (MIT) | Stock recognition and detection models | 13–52 MB | Included fallback |
-| PP-OCRv6 (Apache-2.0) | General recognition and detection models | 1.7–73 MB | Base models |
-| KaptchaOCR fine-tuned | Models trained on CAPTCHA images | 4.3–73 MB | `fast` / `balanced` / `accurate` |
+| Model | Task | Size | Use | Hugging Face |
+| --- | --- | ---: | --- | --- |
+| `ft-tiny` | recognition | 4.3 MB | `fast` preset | [tiny-rec](https://huggingface.co/zaltahir/kaptchaocr-tiny-rec) |
+| `ft-small` | recognition | 20 MB | `balanced` preset (default) | [small-rec](https://huggingface.co/zaltahir/kaptchaocr-small-rec) |
+| `ft-medium` | recognition | 73 MB | `accurate` preset | [medium-rec](https://huggingface.co/zaltahir/kaptchaocr-medium-rec) |
+| `ft-small-det` | glyph detection | 9.5 MB | click CAPTCHAs | [small-det](https://huggingface.co/zaltahir/kaptchaocr-small-det) |
+| `ft-medium-det` | glyph detection | 59 MB | click CAPTCHAs, tighter boxes | [medium-det](https://huggingface.co/zaltahir/kaptchaocr-medium-det) |
+
+Every model has its own repo in the
+[KaptchaOCR collection](https://huggingface.co/collections/zaltahir/kaptchaocr).
+The benchmark also compares ddddocr and PP-OCRv6 base models; those weights are
+not included in this repo.
 
 ```sh
 # pick a speed/accuracy preset
@@ -223,9 +230,10 @@ welcome. The code lives in `src/`, with the models and Python client in
 
 ## Acknowledgements
 
-- [ddddocr](https://github.com/sml2h3/ddddocr) — the included stock models, and
-  the original implementation this project is based on. MIT licensed; the notice
-  is in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+- [ddddocr](https://github.com/sml2h3/ddddocr) — the original implementation
+  this project is based on, and the stock models used for benchmark
+  comparison. MIT licensed; the notice is in
+  [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
 - [PaddleOCR / PP-OCRv6](https://github.com/PaddlePaddle/PaddleOCR) — the base
   models used for the fine-tuned models. Apache-2.0.
 

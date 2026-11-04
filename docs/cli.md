@@ -11,9 +11,7 @@ Options:
       --only-mcp
           Enable the MCP protocol only, without the regular routes; mutually exclusive with mcp
       --ocr
-          Enable content recognition; mutually exclusive with old
-      --old
-          Enable content recognition with the legacy model; mutually exclusive with ocr
+          Enable content recognition
       --det
           Enable object detection
       --slide
@@ -21,9 +19,9 @@ Options:
       --ocr-charset-range <OCR_CHARSET_RANGE>
           Global default charset for probability-based recognition. If the API does not provide a charset, this value is used. Values 0~7 select a built-in charset; any other value is a custom charset, e.g. "0123456789+-x/=". If unset, the full charset is used without restriction
       --ocr-path <OCR_PATH>
-          Path to the content recognition model and its charset. If the inline-model feature is enabled (the default), you can ignore this option unless you want a custom model. The model and charset paths must share the same base name, e.g. `model/stock_common.onnx` + `model/stock_common.json` [default: model/stock_common.onnx]
+          Path to the content recognition model and its charset. If the inline-model feature is enabled (the default), you can ignore this option unless you want a custom model. The model and charset paths must share the same base name, e.g. `model/finetuned/small_rec.onnx` + `model/finetuned/small_rec.json` [default: model/finetuned/small_rec.onnx]
       --det-path <DET_PATH>
-          Path to the object detection model. If the inline-model feature is enabled (the default), you can ignore this option unless you want a custom model [default: model/stock_det.onnx]
+          Path to the object detection model. If the inline-model feature is enabled (the default), you can ignore this option unless you want a custom model [default: model/finetuned/small_det.onnx]
       --acme <ACME>
           Provide your domain to automatically obtain an SSL certificate, i.e. HTTPS support
       --max-concurrency <MAX_CONCURRENCY>
@@ -43,7 +41,7 @@ Options:
       --rec-model <REC_MODEL>
           Select a rec model by name from the manifest (defaults to the first rec entry), e.g. --rec-model ft-small. Takes precedence over --profile
       --det-model <DET_MODEL>
-          Select a det model by name from the manifest (defaults to the first det entry), e.g. --det-model ppocrv6-tiny-det
+          Select a det model by name from the manifest (defaults to the first det entry), e.g. --det-model ft-small-det
   -h, --help
           Print help
 ```
@@ -66,5 +64,5 @@ kaptchaocr --ocr --det --manifest model/models.json \
 kaptchaocr --ocr --det --slide --only-mcp
 ```
 
-Without `--manifest`, the embedded stock models are used. Profiles and model
+Without `--manifest`, the embedded fine-tuned models are used. Profiles and model
 selection are covered in [Models](models.md).

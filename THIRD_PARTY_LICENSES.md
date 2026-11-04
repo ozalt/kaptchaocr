@@ -7,8 +7,9 @@ It redistributes or derives from the following third-party works.
 
 - Upstream: <https://github.com/sml2h3/ddddocr>
 - License: MIT
-- Used for: the bundled stock recognition/detection models (`model/stock_*.onnx`)
-  and portions of the original implementation this project is based on.
+- Used for: portions of the original implementation this project is based on,
+  and the stock models used for benchmark comparison. The stock model weights
+  are not redistributed.
 
 ```text
 The MIT License (MIT)
@@ -37,7 +38,7 @@ THE SOFTWARE.
 
 - Upstream: <https://github.com/PaddlePaddle/PaddleOCR>
 - License: Apache-2.0
-- Used for: base PP-OCRv6 detection/recognition models and the fine-tuned
-  derivatives shipped in `model/finetuned/`.
+- Used for: base PP-OCRv6 models used for benchmark comparison, and the
+  fine-tuned derivatives shipped in `model/finetuned/`.
 
 The Apache-2.0 license text is included in the root [`LICENSE`](LICENSE) file.

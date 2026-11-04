@@ -46,11 +46,8 @@ docker run --rm -p 8000:8000 \
 ## What is inside
 
 - `kaptchaocr` binary at `/usr/local/bin/kaptchaocr`
-- `model/stock_*` and `model/finetuned/` models
+- `model/finetuned/` models
 - `model/models.json` manifest
-
-`model/ppocrv6/` base models are **not** in the image (they are gitignored);
-mount them if you need the base (non-fine-tuned) entries.
 
 A GHCR image will be published with the first public release. Until then,
 `docker build` is the supported path.

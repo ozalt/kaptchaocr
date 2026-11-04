@@ -6,7 +6,7 @@ model output.
 
 ## Text and math captchas: `POST /solve`
 
-Requires `--ocr` (or `--old`). Same fields as `/ocr`, plus `math`:
+Requires `--ocr`. Same fields as `/ocr`, plus `math`:
 `auto` (default) or `off`.
 
 ```json
@@ -118,8 +118,8 @@ kaptchaocr --address 127.0.0.1:8000 --ocr --det \
 ```
 
 `ft-small-det` scores **95.8% F1@0.5** on the fresh 400-image benchmark;
-`stock-det` scores 57.5%. `ft-medium-det` is ~5× slower but tighter at IoU 0.75
-(63.1% vs 50.5%). See [Benchmarks](../benchmarks/README.md).
+`ft-medium-det` is ~5× slower but tighter at IoU 0.75 (63.1% vs 50.5%). See
+[Benchmarks](../benchmarks/README.md).
 
-Pass `charset_range` with the prompt characters to constrain recognition. Both
-the official models and fine-tuned PP-OCRv6 CTC models support it.
+Pass `charset_range` with the prompt characters to constrain recognition. The
+fine-tuned PP-OCRv6 CTC models support it.
