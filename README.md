@@ -218,9 +218,10 @@ rate limits, queue and MCP.
 
 ## Project status
 
-The library and models are ready. Release packages are being prepared: GitHub
-downloads, a Docker image, a PyPI client and Hugging Face models. Until those
-are out, build from source or use Docker.
+The library and models are ready. The five fine-tuned models are published on
+Hugging Face (see the collection above). Release packages are still being
+prepared: GitHub downloads, a Docker image and a PyPI client. Until those are
+out, build from source or use Docker.
 
 ## Contributing
 
