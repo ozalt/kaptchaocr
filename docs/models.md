@@ -44,8 +44,9 @@ kaptchaocr --ocr --det --manifest model/models.json \
   --rec-model ft-small --det-model ft-small-det
 ```
 
-Without `--manifest`, the server uses the embedded `ft-small` recognizer and
-`ft-small-det` detector. With a manifest, `--profile`, `--rec-model` and
+Without `--manifest`, the default build uses the embedded `ft-small` recognizer
+and `ft-small-det` detector; non-inline builds read those files from
+`model/finetuned/`. With a manifest, `--profile`, `--rec-model` and
 `--det-model` select entries; the explicit model flags take precedence over the
 profile.
 

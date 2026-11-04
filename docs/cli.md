@@ -64,5 +64,6 @@ kaptchaocr --ocr --det --manifest model/models.json \
 kaptchaocr --ocr --det --slide --only-mcp
 ```
 
-Without `--manifest`, the embedded fine-tuned models are used. Profiles and model
-selection are covered in [Models](models.md).
+Without `--manifest`, the default build uses the embedded fine-tuned models;
+non-inline builds read `model/finetuned/`. Profiles and model selection are
+covered in [Models](models.md).
