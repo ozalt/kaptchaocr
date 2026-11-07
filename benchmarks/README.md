@@ -178,9 +178,8 @@ python3 benchmarks/plot_benchmarks.py
 The benchmark data is on Hugging Face. The synthetic detection set is
 [`zaltahir/kaptchaocr-det`](https://huggingface.co/datasets/zaltahir/kaptchaocr-det)
 and the recognition set is
-[`zaltahir/kaptchaocr-rec`](https://huggingface.co/datasets/zaltahir/kaptchaocr-rec)
-(non-commercial research use). The recognition images retain their original
-source terms; the split codenames are used throughout this repo. See
+[`zaltahir/kaptchaocr-rec`](https://huggingface.co/datasets/zaltahir/kaptchaocr-rec).
+Split codenames are used throughout this repo. See
 [`THIRD_PARTY_LICENSES.md`](../THIRD_PARTY_LICENSES.md) for the ddddocr (MIT)
 and PP-OCRv6 (Apache-2.0) notices.
 
