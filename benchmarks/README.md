@@ -21,7 +21,7 @@ CAPTCHA data**. Every number here comes from the raw CSVs in
   `ft-medium-det` matches it at F1@0.5 (95.7%) and is much stronger at the
   tighter IoU 0.75 (63.1% vs 50.5%), but is ~5× slower.
 - PP-OCRv6 **recognition** base models collapse case on 10-character sets
-  (0% exact on `archive2`) while keeping respectable character accuracy;
+  (0% exact on `birch`) while keeping respectable character accuracy;
   fine-tuning fixes exactly that.
 
 ## Recognition (OCR)
@@ -41,14 +41,14 @@ CAPTCHA data**. Every number here comes from the raw CSVs in
 Six image-disjoint held-out sets, **4,399 images** total. No filename appears
 in the 194,355-line training split.
 
-| Split | Images | Source |
-| --- | ---: | --- |
-| `archive1` | 1,000 | captcha archive |
-| `archive2` | 1,019 | captcha archive |
-| `archive3` | 107 | captcha archive |
-| `hammer888` | 674 | [hammer888/captcha-data](https://huggingface.co/datasets/hammer888/captcha-data) |
-| `kaggle` | 1,000 | Kaggle CAPTCHA images |
-| `lcsd` | 599 | LCSD CAPTCHA images |
+| Split | Images |
+| --- | ---: |
+| `atlas` | 1,000 |
+| `birch` | 1,019 |
+| `cobalt` | 107 |
+| `dune` | 674 |
+| `ember` | 1,000 |
+| `fjord` | 599 |
 
 ### Models
 
@@ -84,7 +84,7 @@ Sorted by exact match. “Exact” is the whole string, case-sensitive;
 <details>
 <summary>Per-set exact match</summary>
 
-| Model | archive1 | archive2 | archive3 | hammer888 | kaggle | lcsd |
+| Model | atlas | birch | cobalt | dune | ember | fjord |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | ddddocr v2 | 13% | 28% | 71% | 18% | 0% | 3% |
 | ddddocr legacy | 9% | 36% | 70% | 19% | 0% | 3% |

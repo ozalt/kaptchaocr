@@ -34,12 +34,12 @@ OUT = ROOT / "docs" / "assets" / "benchmarks"
 OUT.mkdir(parents=True, exist_ok=True)
 
 SPLITS = [
-    "test_archive1",
-    "test_archive2",
-    "test_archive3",
-    "test_hammer888",
-    "test_kaggle",
-    "test_lcsd",
+    "test_atlas",
+    "test_birch",
+    "test_cobalt",
+    "test_dune",
+    "test_ember",
+    "test_fjord",
 ]
 SPLIT_LABEL = {s: s.removeprefix("test_") for s in SPLITS}
 
