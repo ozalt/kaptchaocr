@@ -158,10 +158,10 @@ Sorted by F1@0.5. Glyph-level ground truth; greedy polygon matching.
   loaded sequentially; one warm-up image per model.
 - **Latency:** mean wall-clock ms per image, including pre-processing. These
   are rough comparisons on one machine, not a throughput guarantee.
-- **Recognition:** `eval_dataset` over `labels.txt` splits in the private
-  training workspace; exact match is case-sensitive.
-- **Detection:** `eval_det` over `images/` + `gt.json`; polygon IoU with greedy
-  matching at 0.5 and 0.75.
+- **Recognition:** `eval_dataset` over the public recognition dataset's six
+  held-out splits; exact match is case-sensitive.
+- **Detection:** `eval_det` over the public detection dataset's images and box
+  annotations; polygon IoU with greedy matching at 0.5 and 0.75.
 - **Model sizes** are the ONNX file sizes.
 
 ### Reproduce the charts
