@@ -73,8 +73,9 @@ The synthetic detection set — 20,000 training images plus the 400-image
 benchmark split — is public on Hugging Face:
 [`zaltahir/kaptchaocr-det`](https://huggingface.co/datasets/zaltahir/kaptchaocr-det).
 
-The recognition set is curated from public sources with mixed licenses, so its
-images are not redistributed here.
+The recognition set — 169,311 training images, 5,000 validation images and the
+six codenamed benchmark splits — is also public for non-commercial research:
+[`zaltahir/kaptchaocr-rec`](https://huggingface.co/datasets/zaltahir/kaptchaocr-rec).
 
 ## Quick start
 

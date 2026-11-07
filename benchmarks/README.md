@@ -50,6 +50,9 @@ in the 194,355-line training split.
 | `ember` | 1,000 |
 | `fjord` | 599 |
 
+Split names are neutral codenames; the source mapping is kept in the private
+research workspace.
+
 ### Models
 
 | Family | Models |
@@ -172,12 +175,14 @@ python3 -m pip install matplotlib numpy
 python3 benchmarks/plot_benchmarks.py
 ```
 
-No dataset images are redistributed in this repository. The synthetic detection
-set is public on Hugging Face:
-[`zaltahir/kaptchaocr-det`](https://huggingface.co/datasets/zaltahir/kaptchaocr-det).
-The recognition images remain at their original sources because their licenses
-are mixed. See [`THIRD_PARTY_LICENSES.md`](../THIRD_PARTY_LICENSES.md) for the
-ddddocr (MIT) and PP-OCRv6 (Apache-2.0) notices.
+The benchmark data is on Hugging Face. The synthetic detection set is
+[`zaltahir/kaptchaocr-det`](https://huggingface.co/datasets/zaltahir/kaptchaocr-det)
+and the recognition set is
+[`zaltahir/kaptchaocr-rec`](https://huggingface.co/datasets/zaltahir/kaptchaocr-rec)
+(non-commercial research use). The recognition images retain their original
+source terms; the split codenames are used throughout this repo. See
+[`THIRD_PARTY_LICENSES.md`](../THIRD_PARTY_LICENSES.md) for the ddddocr (MIT)
+and PP-OCRv6 (Apache-2.0) notices.
 
 ## Files
 
