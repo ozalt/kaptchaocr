@@ -22,7 +22,7 @@ download-binaries = ["ort/download-binaries"]
 
 [dependencies]
 # Inference and numerical computing; Windows DML removed for compatibility
-ort = { git = "https://github.com/86maid/ort.git", default-features = false, features = [
+ort = { git = "https://github.com/86maid/ort.git", rev = "5f1a53df1ec78dfabf02c5b7c71ecb967e21cf72", default-features = false, features = [
   "ndarray",
   "half",
   "copy-dylibs",

@@ -129,6 +129,8 @@ class Client:
         probability: Optional[bool] = None,
         charset_range: Optional[str] = None,
         color_filter: Any = None,
+        case: Optional[str] = None,
+        min_confidence: Optional[float] = None,
     ) -> SolveResult:
         """Recognize a captcha and (with ``math="auto"``) solve it as an
         arithmetic expression."""
@@ -140,6 +142,8 @@ class Client:
             probability=probability,
             charset_range=charset_range,
             color_filter=color_filter,
+            case=case,
+            min_confidence=min_confidence,
         )
         data = self._request("POST", "/solve", payload)
         math_data = data.get("math")
@@ -173,6 +177,8 @@ class Client:
         probability: Optional[bool] = None,
         charset_range: Optional[str] = None,
         color_filter: Any = None,
+        case: Optional[str] = None,
+        min_confidence: Optional[float] = None,
     ) -> OcrResult:
         """Recognize a captcha, returning only the text (and optional
         probability data)."""
@@ -183,6 +189,8 @@ class Client:
             probability=probability,
             charset_range=charset_range,
             color_filter=color_filter,
+            case=case,
+            min_confidence=min_confidence,
         )
         data = self._request("POST", "/ocr", payload)
 
@@ -426,7 +434,13 @@ class Client:
 
                 return data if isinstance(data, dict) else {}
 
-            retryable = response.status == 429 or response.status >= 500
+            # Some older servers report 429 in the envelope while returning 200.
+            # Retry that, but never retry a deterministic 4xx (bad input/auth).
+            retryable = (
+                response.status == 429
+                or response.status >= 500
+                or code == 429
+            )
 
             if retryable and attempt < self.retries:
                 self._sleep(attempt, response.headers)

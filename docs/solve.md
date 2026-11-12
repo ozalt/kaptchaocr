@@ -27,13 +27,16 @@ Requires `--ocr`. Same fields as `/ocr`, plus `math`:
     "math": {"expression": "5+?=8", "result": 3.0, "answer": "3"},
     "probability": null,
     "charset": null,
-    "confidence": null,
+    "confidence": 0.941,
     "model": "ft-small"
   }
 }
 ```
 
-`math` is `null` when the text is not an expression. Supported forms include:
+`math` is `null` when the text is not an expression, or when the text contains
+no binary operator (`+ - * /`). That guard prevents OCR damage such as
+`113=?` (a dropped minus sign) from becoming a confident but wrong answer.
+Supported forms include:
 
 - `3+5=`, `9÷3`, `4x6`, full-width `４×６＝`
 - single-unknown equations: `5+?=8`, `?×6=42`, `12/?=4`
@@ -107,8 +110,11 @@ Response fields:
 - `boxes` — every detected glyph box with recognized character and score
 - `unmatched` — prompt characters that could not be matched
 
-Matching takes the first unused box, preferring an exact character match over
-an ASCII case-insensitive one. Without `prompt`, only the boxes are returned.
+When `prompt` is present and `charset_range` is not, recognition is restricted
+to the unique prompt characters. Boxes are then assigned globally by model
+score (not first-match), so an early target cannot take the box a later target
+needs. `boxes[].ch` therefore uses the prompt's character set. Without
+`prompt`, only the boxes are returned and recognition uses the full charset.
 
 For click solving, use the fine-tuned glyph detector + recognizer:
 
@@ -121,5 +127,6 @@ kaptchaocr --address 127.0.0.1:8000 --ocr --det \
 `ft-medium-det` is ~5× slower but tighter at IoU 0.75 (63.1% vs 50.5%). See
 [Benchmarks](../benchmarks/README.md).
 
-Pass `charset_range` with the prompt characters to constrain recognition. The
+The prompt-derived charset is automatic. Pass `charset_range` only when you
+want to override it (for example, to include a confusable character). The
 fine-tuned PP-OCRv6 CTC models support it.

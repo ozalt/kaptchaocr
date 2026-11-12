@@ -172,6 +172,51 @@ pub fn match_prompt(prompt: &[char], hits: &[String]) -> ClickMatch {
     ClickMatch { order, unmatched }
 }
 
+/// Match prompt characters against per-box, per-target scores.
+///
+/// `box_scores[box][target]` is the model's score for the target character in
+/// that box. Pairs are assigned globally by descending score, so an early
+/// prompt character cannot take the box a later character needs.
+pub fn match_prompt_scores(prompt: &[char], box_scores: &[Vec<f32>]) -> ClickMatch {
+    let mut pairs = Vec::new();
+
+    for (box_idx, scores) in box_scores.iter().enumerate() {
+        for (target_idx, &score) in scores.iter().enumerate().take(prompt.len()) {
+            if score > 0.0 && score.is_finite() {
+                pairs.push((score, target_idx, box_idx));
+            }
+        }
+    }
+
+    pairs.sort_by(|a, b| {
+        b.0.total_cmp(&a.0)
+            .then_with(|| a.1.cmp(&b.1))
+            .then_with(|| a.2.cmp(&b.2))
+    });
+
+    let mut used_boxes = vec![false; box_scores.len()];
+    let mut assigned: Vec<Option<usize>> = vec![None; prompt.len()];
+
+    for (_, target_idx, box_idx) in pairs {
+        if assigned[target_idx].is_none() && !used_boxes[box_idx] {
+            assigned[target_idx] = Some(box_idx);
+            used_boxes[box_idx] = true;
+        }
+    }
+
+    let mut order = Vec::new();
+    let mut unmatched = Vec::new();
+
+    for (target_idx, &target) in prompt.iter().enumerate() {
+        match assigned[target_idx] {
+            Some(box_idx) => order.push(box_idx),
+            None => unmatched.push(target),
+        }
+    }
+
+    ClickMatch { order, unmatched }
+}
+
 /// Closing bracket for an opening bracket/quote, if any.
 fn matching_bracket(open: char) -> Option<char> {
     Some(match open {
@@ -283,5 +328,25 @@ mod tests {
         let m = match_prompt(&chars("B"), &hits);
 
         assert_eq!(m.order, vec![0]);
+    }
+
+    #[test]
+    fn score_assignment_avoids_early_target_stealing() {
+        // Box 0 is the best match for both targets, but B scores higher.
+        // Global assignment gives box 0 to B; A has no other box.
+        let scores = vec![vec![0.90, 0.95], vec![0.10, 0.20]];
+        let m = match_prompt_scores(&chars("AB"), &scores);
+
+        assert_eq!(m.order, vec![1, 0]);
+        assert!(m.unmatched.is_empty());
+    }
+
+    #[test]
+    fn score_assignment_uses_the_best_available_box() {
+        let scores = vec![vec![0.80, 0.70], vec![0.60, 0.90]];
+        let m = match_prompt_scores(&chars("AB"), &scores);
+
+        assert_eq!(m.order, vec![0, 1]);
+        assert!(m.unmatched.is_empty());
     }
 }

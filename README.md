@@ -5,7 +5,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
   <img alt="Rust stable" src="https://img.shields.io/badge/rust-stable-orange.svg">
-  <img alt="54 tests passing" src="https://img.shields.io/badge/tests-54%20passing-brightgreen.svg">
+  <a href="https://github.com/ozalt/kaptchaocr/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ozalt/kaptchaocr/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Docker image kaptchaocr" src="https://img.shields.io/badge/docker-kaptchaocr-2496ED.svg">
   <img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9%2B-3776AB.svg">
   <a href="benchmarks/README.md"><img alt="Benchmarks on 4,399 images" src="https://img.shields.io/badge/benchmarks-4%2C399%20images-7c3aed.svg"></a>
@@ -37,7 +37,7 @@ is still work in progress. It is not included in this repo yet.
 
 | What | Details |
 | --- | --- |
-| Text OCR | Reads letters and numbers. You can limit which characters it looks for. |
+| Text OCR | Reads letters and numbers. Limit the character set, normalize case, and reject low-confidence reads. |
 | Click CAPTCHAs | Finds the character boxes and puts the clicks in the prompt order. |
 | Slider puzzles | Finds the gap and can make a drag path. |
 | Server | One binary with an HTTP API, API docs, MCP for AI agents, API keys and rate limits. |
@@ -66,6 +66,22 @@ We tested the models on **4,399 CAPTCHA images they had not seen before**, and o
 </p>
 
 [Full results, tables, charts and method →](benchmarks/README.md)
+
+### On a new CAPTCHA style
+
+The held-out sets above come from the same sources as the training data. On
+fresh generators the numbers are lower — this is the honest range to plan for:
+
+| Fresh generator | ft-small exact | ft-small, case-insensitive | ft-medium exact | ft-medium, case-insensitive |
+| --- | ---: | ---: | ---: | ---: |
+| Python `captcha` library | 39.3% | 70.7% | 53.0% | 77.0% |
+| PIL: rotated glyphs, lines, speckle | 63.7% | 78.0% | 54.3% | 76.7% |
+
+About half of the remaining errors are case-only (`c`/`C`, `w`/`W`, …). Expect
+roughly **40–65% exact** on an unseen style, not 80–90%. Use `case: "lower"` or
+`case: "upper"` when the target is case-insensitive, and `min_confidence` to
+reject uncertain reads. `ft-medium` is not uniformly better out of
+distribution; `ft-small` beat it on the PIL set.
 
 ## Datasets
 
@@ -217,6 +233,22 @@ The models are ONNX files. The Rust code handles image preparation, character
 decoding and the click/slider logic. The server adds the HTTP routes, API key,
 rate limits, queue and MCP.
 
+## Known limitations
+
+- **Math operators.** The recognition labels do not contain `- * / × ÷`, so
+  subtraction, multiplication and division are often misread. The math solver
+  now refuses to return an answer unless the text contains a binary operator;
+  the raw `text` is still returned.
+- **Click recognition.** Per-target hit rate is about 88% for Latin and 78% for
+  CJK without a prompt. A prompt restricts recognition to the prompt characters
+  and raises full-image success from about 44% to 63%.
+- **Slider matching.** On generated jigsaw sliders the gap is within 8 px about
+  49% of the time (median error 14 px). The current texture/NCC match is the
+  weak point; alpha-outline matching is future work.
+- **New styles need retraining.** Synthetic out-of-distribution styles, random
+  fonts, overlapping glyphs and single-glyph crops would close most of the gap
+  shown above. No model retraining is included in this release.
+
 ## Project status
 
 The library and models are ready. The five fine-tuned models are published on
@@ -236,6 +268,10 @@ welcome. The code lives in `src/`, with the models and Python client in
   this project is based on, and the stock models used for benchmark
   comparison. MIT licensed; the notice is in
   [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+- [86maid/ddddocr](https://github.com/86maid/ddddocr) — the Rust port whose API
+  shape (`classification_with_png_fix`, `slide_comparison`, charset ranges)
+  informed this project. Its README declares Apache-2.0; the upstream
+  repository has no license file, so this is an attribution notice only.
 - [PaddleOCR / PP-OCRv6](https://github.com/PaddlePaddle/PaddleOCR) — the base
   models used for the fine-tuned models. Apache-2.0.
 

@@ -20,8 +20,10 @@ Only tools backed by enabled features are advertised. With `--ocr --det
 
 | Tool | Purpose |
 | --- | --- |
-| `ocr` | OCR recognition (`image`, `color_filter`, `charset_range`) |
+| `ocr` | OCR recognition (`image`, `color_filter`, `charset_range`, `case`, `min_confidence`) |
+| `solve` | OCR plus arithmetic solving (`image`, `math`, same optional fields as `ocr`) |
 | `det` | Bounding boxes (`image`) |
+| `solve_click` | Click CAPTCHA solving (`image`, `prompt`, `score_threshold`, `charset_range`) |
 | `slide_match` | Template slider matching (`target_image`, `background_image`, `simple_target`) |
 | `slide_comparison` | Gap comparison (`target_image`, `background_image`) |
 
@@ -69,7 +71,7 @@ Only tools backed by enabled features are advertised. With `--ocr --det
   "id": 2,
   "result": {
     "content": [
-      {"type": "text", "text": "{\"probability\":null,\"text\":\"8A62N1\"}"}
+      {"type": "text", "text": "{\"probability\":null,\"text\":\"8A62N1\",\"confidence\":0.934}"}
     ],
     "isError": false
   }

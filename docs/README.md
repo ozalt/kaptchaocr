@@ -20,6 +20,7 @@ These pages cover the details.
 | [Troubleshooting](troubleshooting.md) | CUDA, static linking, ONNX Runtime issues |
 | [Python client](python-client.md) | Zero-dependency client usage |
 | [Benchmarks](../benchmarks/README.md) | Held-out accuracy/latency results and charts |
+| [Evaluation harness](../evaluation/README.md) | End-to-end checks against a running server |
 
 ## Conventions
 

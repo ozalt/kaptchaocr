@@ -1,0 +1,66 @@
+{
+ "n": 200,
+ "solved": 0.66,
+ "errors_sample": [
+  {
+   "image_text": "11-3=?",
+   "ocr": "113=?",
+   "answer": "113",
+   "gold": "8"
+  },
+  {
+   "image_text": "10+5=?",
+   "ocr": "10X5=?",
+   "answer": "50",
+   "gold": "15"
+  },
+  {
+   "image_text": "20-4=?",
+   "ocr": "204=?",
+   "answer": "204",
+   "gold": "16"
+  },
+  {
+   "image_text": "11+7=?",
+   "ocr": "11+7?",
+   "answer": null,
+   "gold": "18"
+  },
+  {
+   "image_text": "14+3=?",
+   "ocr": "14x3=?",
+   "answer": "42",
+   "gold": "17"
+  },
+  {
+   "image_text": "16-7=?",
+   "ocr": "167=?",
+   "answer": "167",
+   "gold": "9"
+  },
+  {
+   "image_text": "12-1=?",
+   "ocr": "121=?",
+   "answer": "121",
+   "gold": "11"
+  },
+  {
+   "image_text": "19-6=?",
+   "ocr": "196=?",
+   "answer": "196",
+   "gold": "13"
+  },
+  {
+   "image_text": "19-1=?",
+   "ocr": "19-1≤?",
+   "answer": null,
+   "gold": "18"
+  },
+  {
+   "image_text": "18-2=?",
+   "ocr": "182?",
+   "answer": null,
+   "gold": "16"
+  }
+ ]
+}

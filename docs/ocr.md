@@ -99,6 +99,19 @@ println!("probability: {}", result.json());
 The probability matrix can be large; prefer it for offline analysis rather than
 per-request logging.
 
+## Case and confidence
+
+`/ocr` and `/solve` accept `case` = `keep` (default), `lower` or `upper`, and
+`min_confidence` (0.0–1.0). `confidence` is the mean per-character probability
+and is returned on every successful response; `min_confidence` turns a lower
+result into HTTP 422 so automation can request a fresh CAPTCHA.
+
+```sh
+curl -s http://127.0.0.1:8000/ocr \
+  -H 'Content-Type: application/json' \
+  -d "{\"image\":\"$IMG\",\"case\":\"lower\",\"min_confidence\":0.8}"
+```
+
 ## Reference images
 
 <p>

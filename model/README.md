@@ -147,7 +147,7 @@ EOF
 > Validate accuracy with the eval harness before/after shrinking:
 >
 > ```bash
-> cargo run --release --example eval -- --n 200 --lang both
+> python3 evaluation/run_eval.py --data hf --suites rec,synth --limit 200
 > ```
 
 ---

@@ -1,0 +1,22 @@
+{
+ "prompt_only": {
+  "n_images": 400,
+  "image_solved": 0.44,
+  "target_click_hit": 0.8311,
+  "hit_by_type": {
+   "latin": 0.8778,
+   "cjk": 0.7844
+  },
+  "mean_ms": 249.0
+ },
+ "prompt+charset_range": {
+  "n_images": 400,
+  "image_solved": 0.6275,
+  "target_click_hit": 0.8983,
+  "hit_by_type": {
+   "latin": 0.92,
+   "cjk": 0.8767
+  },
+  "mean_ms": 135.1
+ }
+}

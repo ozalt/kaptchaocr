@@ -28,6 +28,8 @@ Options:
           Maximum number of concurrent ONNX inference tasks, defaults to the number of CPU cores. 0 uses the number of CPU cores [default: 0]
       --rate-limit <RATE_LIMIT>
           Allowed requests per IP per 10 seconds; 0 means unlimited [default: 0]
+      --trust-forwarded-for
+          Use the first `X-Forwarded-For` address for rate limiting. Only enable this behind a reverse proxy you control
       --api-key <API_KEY>
           Optional API key; when set, all REST / MCP requests must carry an `Authorization: Bearer <key>` or `x-api-key: <key>` header
       --num-threads <NUM_THREADS>

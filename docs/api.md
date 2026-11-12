@@ -67,6 +67,8 @@ curl -s http://127.0.0.1:8000/status
 | `probability` | bool | Return the full probability matrix + charset |
 | `charset_range` | string | Restrict candidates; see [OCR](ocr.md#charsets) |
 | `color_filter` | string / array | Preset color name(s) or HSV ranges; see [OCR](ocr.md#color-filters) |
+| `case` | string | `keep` (default), `lower` or `upper` |
+| `min_confidence` | number | Reject results below this average confidence with HTTP 422 |
 
 ```sh
 IMG="$(base64 < captcha.png | tr -d '\n')"
@@ -76,7 +78,7 @@ curl -s http://127.0.0.1:8000/ocr \
 ```
 
 ```json
-{"code":200,"msg":"success","data":{"text":"8A62N1","probability":null,"charset":null,"confidence":null}}
+{"code":200,"msg":"success","data":{"text":"8A62N1","probability":null,"charset":null,"confidence":0.934}}
 ```
 
 ## Solve
@@ -91,7 +93,7 @@ curl -s http://127.0.0.1:8000/solve \
 ```
 
 ```json
-{"code":200,"msg":"success","data":{"text":"5+?=8","math":{"expression":"5+?=8","result":3.0,"answer":"3"},"probability":null,"charset":null,"confidence":null,"model":"ft-small"}}
+{"code":200,"msg":"success","data":{"text":"5+?=8","math":{"expression":"5+?=8","result":3.0,"answer":"3"},"probability":null,"charset":null,"confidence":0.941,"model":"ft-small"}}
 ```
 
 See [Solve API](solve.md#text-and-math-captchas-post-solve) for the supported
@@ -192,7 +194,24 @@ curl -s http://127.0.0.1:8000/ocr/upload -F "file=@captcha.png"
 ```
 
 Optional form fields for `/ocr/upload`: `png_fix`, `probability`,
-`charset_range`, `color_filter` (JSON-encoded string).
+`charset_range`, `color_filter` (JSON-encoded string), `case`, and
+`min_confidence`.
+
+## Errors
+
+Errors use the same envelope as successful responses. The HTTP status matches
+`code`:
+
+| Status | Meaning |
+| --- | --- |
+| 400 | invalid base64, unsupported image, image too large, bad form |
+| 401 | missing or invalid API key |
+| 422 | result below `min_confidence` |
+| 429 | rate limit exceeded; `Retry-After` is set |
+| 500 | internal failure |
+
+Images larger than 4096 px on either side, wider than 25:1, or requiring more
+than 128 MiB to decode are rejected with 400.
 
 ## API key, limits and docs
 

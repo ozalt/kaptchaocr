@@ -106,6 +106,7 @@ Full tables, per-set results and latency: [Benchmarks](../benchmarks/README.md).
 
 The fine-tuned models and code are Apache-2.0. They are derived from PP-OCRv6
 base models (Apache-2.0). Portions of the original implementation are from
-[ddddocr](https://github.com/sml2h3/ddddocr) under the MIT license; its stock
-weights are not redistributed. The required notices are in
+[ddddocr](https://github.com/sml2h3/ddddocr) under the MIT license, with API
+conventions adapted from the [86maid Rust port](https://github.com/86maid/ddddocr);
+stock weights are not redistributed. The required notices are in
 [`THIRD_PARTY_LICENSES.md`](../THIRD_PARTY_LICENSES.md).

@@ -72,6 +72,14 @@ def make_client(*responses, **kwargs):
     return client, transport
 
 
+class ImportTest(unittest.TestCase):
+    def test_public_modules_import(self):
+        import kaptchaocr  # noqa: F401
+        import kaptchaocr.client  # noqa: F401
+        import kaptchaocr.errors  # noqa: F401
+        import kaptchaocr.models  # noqa: F401
+
+
 class SolveTest(unittest.TestCase):
     def test_solve_math(self):
         client, transport = make_client(
@@ -289,6 +297,18 @@ class ErrorTest(unittest.TestCase):
             client.solve(b"a")
 
         sleep.assert_called_once_with(1.5)
+        self.assertEqual(len(transport.calls), 2)
+
+    def test_retries_envelope_429_with_http_200(self):
+        client, transport = make_client(
+            (200, {}, {"code": 429, "msg": "too many requests"}),
+            {"text": "ok"},
+        )
+
+        with mock.patch("kaptchaocr.client.time.sleep"):
+            result = client.solve(b"a")
+
+        self.assertEqual(result.text, "ok")
         self.assertEqual(len(transport.calls), 2)
 
     def test_network_error_after_retries(self):

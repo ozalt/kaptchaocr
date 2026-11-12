@@ -1,0 +1,4 @@
+[env]
+# ONNX Runtime sessions are not safe to create/destroy concurrently on all
+# platforms; keep the unit test harness deterministic.
+RUST_TEST_THREADS = "1"

@@ -7,6 +7,39 @@ pub mod manifest;
 pub mod math;
 pub mod trajectory;
 
+/// Hard cap for either image side accepted by the decoders.
+pub const MAX_IMAGE_SIDE: u32 = 4096;
+
+/// Hard cap for decoder allocations (decompression-bomb guard).
+pub const MAX_DECODE_ALLOC: u64 = 128 * 1024 * 1024;
+
+/// Widest aspect ratio accepted by the recognition preprocessor.
+pub const MAX_ASPECT_RATIO: f32 = 25.0;
+
+/// Widest tensor the recognition preprocessor may produce.
+pub const MAX_REC_WIDTH: u32 = 48 * 25;
+
+/// Decode an image with dimension and allocation limits.
+///
+/// All server and library image entry points must use this instead of
+/// `image::load_from_memory`, so a small malicious file cannot allocate an
+/// unbounded pixel buffer.
+pub fn decode_image(bytes: &[u8]) -> anyhow::Result<image::DynamicImage> {
+    let mut reader = image::ImageReader::new(std::io::Cursor::new(bytes))
+        .with_guessed_format()
+        .map_err(|e| anyhow::anyhow!("unsupported or invalid image: {e}"))?;
+
+    let mut limits = image::Limits::default();
+    limits.max_image_width = Some(MAX_IMAGE_SIDE);
+    limits.max_image_height = Some(MAX_IMAGE_SIDE);
+    limits.max_alloc = Some(MAX_DECODE_ALLOC);
+    reader.limits(limits);
+
+    reader
+        .decode()
+        .map_err(|e| anyhow::anyhow!("unsupported or invalid image: {e}"))
+}
+
 /// Initialize content recognition with the default fine-tuned model (`ft-small`).
 #[cfg(feature = "inline-model")]
 pub fn kaptchaocr_classification() -> anyhow::Result<KaptchaOcr<'static>> {
@@ -93,8 +126,8 @@ where
     I1: AsRef<[u8]>,
     I2: AsRef<[u8]>,
 {
-    let target_image = image::load_from_memory(target_image.as_ref())?;
-    let background_image = image::load_from_memory(background_image.as_ref())?;
+    let target_image = decode_image(target_image.as_ref())?;
+    let background_image = decode_image(background_image.as_ref())?;
 
     anyhow::ensure!(
         background_image.width() >= target_image.width(),
@@ -204,8 +237,8 @@ where
     I1: AsRef<[u8]>,
     I2: AsRef<[u8]>,
 {
-    let target_image = image::load_from_memory(target_image.as_ref())?;
-    let background_image = image::load_from_memory(background_image.as_ref())?;
+    let target_image = decode_image(target_image.as_ref())?;
+    let background_image = decode_image(background_image.as_ref())?;
 
     anyhow::ensure!(
         background_image.width() >= target_image.width(),
@@ -264,8 +297,8 @@ where
     I1: AsRef<[u8]>,
     I2: AsRef<[u8]>,
 {
-    let target_image = image::load_from_memory(target_image.as_ref())?;
-    let background_image = image::load_from_memory(background_image.as_ref())?;
+    let target_image = decode_image(target_image.as_ref())?;
+    let background_image = decode_image(background_image.as_ref())?;
 
     anyhow::ensure!(
         target_image.width() == background_image.width()
@@ -327,19 +360,11 @@ where
     )
 }
 
-/// Determine whether the model is a custom (DIY) model.
-pub fn is_diy<MODEL>(model: MODEL) -> bool
-where
-    MODEL: AsRef<[u8]>,
-{
-    // SHA-256 of the bundled fine-tuned models.
-    let sha256 = sha256::digest(model.as_ref());
-
-    sha256 != "1421f20a9f67a124b88bb57c6a797de251a68282933689143e743b96e2d07cc7"
-        && sha256 != "45625442b7083d0cd96abb229ac7d3ec9182cbcffb5629cf6105f55f580ead04"
-        && sha256 != "3dcf9aa37c1e8fd8c7c4e909d55e242577f4180963c08ef5787b9c7958f1aa8a"
-        && sha256 != "136eb567f409b1141b3ff8a1da1e175730a790c9736cac879e8ba36ddbe5cdcd"
-        && sha256 != "be9b9d84073d689b0682813e0327ffd228776aa6e8551b270d429427eaad2935"
+/// A model is treated as DIY when its charset does not carry explicit
+/// normalization values. Bundled and manifest models carry `mean`/`std`, so
+/// re-exporting the same weights no longer changes the normalization path.
+fn charset_is_diy(charset: &Charset) -> bool {
+    charset.mean.is_none() || charset.std.is_none()
 }
 
 /// Scan rotation angles in -15°..=15°, using horizontal-projection variance to measure "how upright" the text is; returns the best rotation angle (radians).
@@ -972,7 +997,7 @@ impl ColorFilter {
     where
         I: AsRef<[u8]>,
     {
-        let image = image::load_from_memory(image.as_ref())?.to_rgb8();
+        let image = decode_image(image.as_ref())?.to_rgb8();
         let (width, height) = image.dimensions();
         let mut array = ndarray::Array3::<u8>::zeros((height as usize, width as usize, 3));
 
@@ -1405,7 +1430,7 @@ impl<'a> KaptchaOcr<'a> {
         MODEL: AsRef<[u8]>,
     {
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: charset_is_diy(&charset),
             session: ort::Session::builder()?.commit_from_memory(model.as_ref())?,
             charset: Some(std::borrow::Cow::Owned(charset)),
             charset_range: Vec::new(),
@@ -1425,7 +1450,7 @@ impl<'a> KaptchaOcr<'a> {
         MODEL: AsRef<[u8]>,
     {
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: charset_is_diy(&charset),
             session: build_session(model, Some(num_threads))?,
             charset: Some(std::borrow::Cow::Owned(charset)),
             charset_range: Vec::new(),
@@ -1440,7 +1465,7 @@ impl<'a> KaptchaOcr<'a> {
         MODEL: AsRef<[u8]>,
     {
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: charset_is_diy(charset),
             session: ort::Session::builder()?.commit_from_memory(model.as_ref())?,
             charset: Some(std::borrow::Cow::Borrowed(charset)),
             charset_range: Vec::new(),
@@ -1471,7 +1496,7 @@ impl<'a> KaptchaOcr<'a> {
         ort::ExecutionProvider::register(&cuda, &builder)?;
 
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: charset_is_diy(&charset),
             session: builder.commit_from_memory(model.as_ref())?,
             charset: Some(std::borrow::Cow::Owned(charset)),
             charset_range: Vec::new(),
@@ -1508,7 +1533,7 @@ impl<'a> KaptchaOcr<'a> {
         ort::ExecutionProvider::register(&cuda, &builder)?;
 
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: charset_is_diy(&charset),
             session: builder.commit_from_memory(model.as_ref())?,
             charset: Some(std::borrow::Cow::Owned(charset)),
             charset_range: Vec::new(),
@@ -1543,7 +1568,7 @@ impl<'a> KaptchaOcr<'a> {
         ort::ExecutionProvider::register(&cuda, &builder)?;
 
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: charset_is_diy(&charset),
             session: builder.commit_from_memory(model.as_ref())?,
             charset: Some(std::borrow::Cow::Borrowed(charset)),
             charset_range: Vec::new(),
@@ -1558,7 +1583,7 @@ impl<'a> KaptchaOcr<'a> {
         MODEL: AsRef<[u8]>,
     {
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: false,
             session: ort::Session::builder()?.commit_from_memory(model.as_ref())?,
             charset: None,
             charset_range: Vec::new(),
@@ -1577,7 +1602,7 @@ impl<'a> KaptchaOcr<'a> {
         MODEL: AsRef<[u8]>,
     {
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: false,
             session: build_session(model, Some(num_threads))?,
             charset: None,
             charset_range: Vec::new(),
@@ -1608,7 +1633,7 @@ impl<'a> KaptchaOcr<'a> {
         ort::ExecutionProvider::register(&cuda, &builder)?;
 
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: false,
             session: builder.commit_from_memory(model.as_ref())?,
             charset: None,
             charset_range: Vec::new(),
@@ -1644,7 +1669,7 @@ impl<'a> KaptchaOcr<'a> {
         ort::ExecutionProvider::register(&cuda, &builder)?;
 
         Ok(Self {
-            diy: is_diy(model.as_ref()),
+            diy: false,
             session: builder.commit_from_memory(model.as_ref())?,
             charset: None,
             charset_range: Vec::new(),
@@ -1927,7 +1952,7 @@ impl<'a> KaptchaOcr<'a> {
 
         let image = match filter {
             Some(v) => v.filter(image.as_ref())?,
-            None => image::load_from_memory(image.as_ref())?,
+            None => decode_image(image.as_ref())?,
         };
 
         let tensor = self.preprocess(image, png_fix, options)?;
@@ -2032,7 +2057,7 @@ impl<'a> KaptchaOcr<'a> {
     {
         let image = match filter {
             Some(v) => v.filter(image.as_ref())?,
-            None => image::load_from_memory(image.as_ref())?,
+            None => decode_image(image.as_ref())?,
         };
 
         let tensor = self.preprocess(image, png_fix, options)?;
@@ -2241,7 +2266,7 @@ impl<'a> KaptchaOcr<'a> {
     {
         let image = match filter {
             Some(v) => v.filter(image.as_ref())?,
-            None => image::load_from_memory(image.as_ref())?,
+            None => decode_image(image.as_ref())?,
         };
 
         self.classification_internal(image, png_fix, options)
@@ -2256,7 +2281,7 @@ impl<'a> KaptchaOcr<'a> {
     where
         I: AsRef<[u8]>,
     {
-        let image = image::load_from_memory(image.as_ref())?;
+        let image = decode_image(image.as_ref())?;
         let decoded =
             self.classification_internal_conf(image, false, &PreprocessOptions::default())?;
         let charset = self.charset()?;
@@ -2266,6 +2291,48 @@ impl<'a> KaptchaOcr<'a> {
             .filter(|&&(idx, _)| idx < charset.charset.len())
             .map(|&(idx, conf)| (charset.charset[idx].to_string(), conf))
             .collect())
+    }
+
+    /// Content recognition with the average per-character confidence.
+    ///
+    /// This is the same decode path as [`Self::classification_with_options`],
+    /// but returns the mean confidence so callers can reject uncertain results.
+    pub fn classification_with_confidence_options<I>(
+        &self,
+        image: I,
+        png_fix: bool,
+        filter: Option<ColorFilter>,
+    ) -> anyhow::Result<(String, f64)>
+    where
+        I: AsRef<[u8]>,
+    {
+        let image = match filter {
+            Some(v) => v.filter(image.as_ref())?,
+            None => decode_image(image.as_ref())?,
+        };
+        let decoded =
+            self.classification_internal_conf(image, png_fix, &PreprocessOptions::default())?;
+        let charset = self.charset()?;
+
+        let mut text = String::new();
+        let mut total = 0.0f64;
+        let mut count = 0usize;
+
+        for (idx, confidence) in decoded {
+            if idx < charset.charset.len() {
+                text.push_str(&charset.charset[idx]);
+                total += confidence as f64;
+                count += 1;
+            }
+        }
+
+        let confidence = if count == 0 {
+            0.0
+        } else {
+            total / count as f64
+        };
+
+        Ok((text, confidence))
     }
 
     /// Get the model charset config; returns an error instead of panicking when none is configured.
@@ -2322,22 +2389,37 @@ impl<'a> KaptchaOcr<'a> {
         // resize the image with ANTIALIAS (Lanczos3)
         let image = match options.resize {
             ResizeStrategy::Exact(w, h) => {
+                if w > MAX_IMAGE_SIDE || h > MAX_IMAGE_SIDE {
+                    anyhow::bail!("requested resize {w}x{h} exceeds the {MAX_IMAGE_SIDE}px limit");
+                }
                 image.resize_exact(w, h, image::imageops::FilterType::Lanczos3)
             }
             ResizeStrategy::Auto => {
                 if resize[0] == -1 {
-                    // height fixed to resize[1], width scaled proportionally (also applies to CTC sequence models)
-                    image.resize_exact(
-                        image.width() * resize[1] as u32 / image.height(),
-                        resize[1] as u32,
-                        image::imageops::FilterType::Lanczos3,
-                    )
+                    let src_w = image.width().max(1);
+                    let src_h = image.height().max(1);
+                    let aspect = src_w as f32 / src_h as f32;
+                    if aspect > MAX_ASPECT_RATIO {
+                        anyhow::bail!(
+                            "image aspect ratio {aspect:.1}:1 is wider than the {MAX_ASPECT_RATIO}:1 limit"
+                        );
+                    }
+
+                    // height fixed to resize[1], width scaled proportionally, capped to avoid
+                    // allocating a huge tensor for an extremely wide input.
+                    let target_h = resize[1].max(1) as u32;
+                    let target_w = ((src_w as u64 * target_h as u64) / src_h as u64)
+                        .min(MAX_REC_WIDTH as u64)
+                        .max(1) as u32;
+
+                    image.resize_exact(target_w, target_h, image::imageops::FilterType::Lanczos3)
                 } else {
-                    image.resize_exact(
-                        resize[0] as u32,
-                        resize[1] as u32,
-                        image::imageops::FilterType::Lanczos3,
-                    )
+                    let w = resize[0].max(1) as u32;
+                    let h = resize[1].max(1) as u32;
+                    if w > MAX_IMAGE_SIDE || h > MAX_IMAGE_SIDE {
+                        anyhow::bail!("model input {w}x{h} exceeds the {MAX_IMAGE_SIDE}px limit");
+                    }
+                    image.resize_exact(w, h, image::imageops::FilterType::Lanczos3)
                 }
             }
         };
@@ -2523,7 +2605,7 @@ impl<'a> KaptchaOcr<'a> {
     where
         I: AsRef<[u8]>,
     {
-        let image = image::load_from_memory(image.as_ref())?;
+        let image = decode_image(image.as_ref())?;
 
         let mut result = Vec::new();
 
@@ -2614,7 +2696,7 @@ impl<'a> KaptchaOcr<'a> {
     where
         I: AsRef<[u8]>,
     {
-        let image = image::load_from_memory(image.as_ref())?.to_rgb8();
+        let image = decode_image(image.as_ref())?.to_rgb8();
         let (h, w) = (image.height(), image.width());
         let r = (MODEL_WIDTH as f32 / h as f32).min(MODEL_WIDTH as f32 / w as f32);
         let new_w = (w as f32 * r) as u32;
@@ -2760,7 +2842,7 @@ impl<'a> KaptchaOcr<'a> {
     where
         I: AsRef<[u8]>,
     {
-        let img = image::load_from_memory(image.as_ref())?;
+        let img = decode_image(image.as_ref())?;
         let (ow, oh) = (img.width() as f32, img.height() as f32);
 
         // DetResizeForTest defaults to limit_side_len=736; padding to a square keeps shapes stable
@@ -3029,10 +3111,18 @@ mod tests {
     fn classification() {
         let kaptchaocr = kaptchaocr_classification().unwrap();
 
+        // Label checks for the reference fixtures; image/1.png is shown in docs/ocr.md.
+        assert_eq!(
+            kaptchaocr
+                .classification(read_image("image/1.png"))
+                .unwrap(),
+            "nxf2c"
+        );
+
         println!(
             "{}",
             kaptchaocr
-                .classification(read_image("image/1.png"))
+                .classification(read_image("image/2.png"))
                 .unwrap()
         );
 
@@ -3085,7 +3175,7 @@ mod tests {
         println!("{:?}", result);
 
         // draw red boxes
-        let mut image = image::load_from_memory(&input).unwrap().to_rgb8();
+        let mut image = decode_image(&input).unwrap().to_rgb8();
 
         for v in result {
             for i in v.x1..=v.x2 {
@@ -3113,7 +3203,7 @@ mod tests {
         println!("{:?}", result);
 
         // draw red boxes
-        let mut image = image::load_from_memory(&input).unwrap().to_rgb8();
+        let mut image = decode_image(&input).unwrap().to_rgb8();
 
         for v in result {
             for i in v.x1..=v.x2 {
@@ -3712,5 +3802,20 @@ mod tests {
             let charset = entry.charset.as_deref().expect("charset path");
             assert!(std::path::Path::new(charset).exists(), "missing {charset}");
         }
+    }
+
+    #[test]
+    fn decode_image_rejects_oversized_dimensions() {
+        let image = image::RgbImage::from_pixel(MAX_IMAGE_SIDE + 1, 1, image::Rgb([0, 0, 0]));
+        let mut bytes = Vec::new();
+        image::DynamicImage::ImageRgb8(image)
+            .write_to(
+                &mut std::io::Cursor::new(&mut bytes),
+                image::ImageFormat::Png,
+            )
+            .unwrap();
+
+        let error = decode_image(&bytes).unwrap_err().to_string();
+        assert!(error.contains("unsupported or invalid image"), "{error}");
     }
 }

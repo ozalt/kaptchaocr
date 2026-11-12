@@ -18,9 +18,11 @@ use rmcp::model::JsonRpcVersion2_0;
 use rmcp::model::ListToolsResult;
 use rmcp::ErrorData;
 use salvo::catcher::Catcher;
+use salvo::http::header::HeaderValue;
 use salvo::http::request;
 use salvo::http::ReqBody;
 use salvo::http::ResBody;
+use salvo::http::StatusCode;
 use salvo::oapi::extract::JsonBody;
 use salvo::prelude::*;
 use serde::Deserialize;
@@ -104,6 +106,11 @@ where
     }
 }
 
+/// Compares two secrets by SHA-256 digest, avoiding a byte-by-byte early exit.
+fn constant_time_eq(a: &str, b: &str) -> bool {
+    sha256::digest(a.as_bytes()) == sha256::digest(b.as_bytes())
+}
+
 /// Checks whether the request carries the correct API key.
 fn check_auth(req: &salvo::http::Request) -> bool {
     let Some(expected) = ARGS.get().and_then(|a| a.api_key.as_ref()) else {
@@ -117,7 +124,7 @@ fn check_auth(req: &salvo::http::Request) -> bool {
 
     if let Some(auth) = auth_header {
         if let Some(token) = auth.strip_prefix("Bearer ") {
-            if token == expected {
+            if constant_time_eq(token, expected) {
                 return true;
             }
         }
@@ -126,7 +133,7 @@ fn check_auth(req: &salvo::http::Request) -> bool {
     req.headers()
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
-        .is_some_and(|v| v == expected)
+        .is_some_and(|v| constant_time_eq(v, expected))
 }
 
 /// Rate limiting + authentication middleware.
@@ -143,6 +150,7 @@ async fn auth_and_rate_limit(
     let is_public = public_paths.iter().any(|p| path.starts_with(p));
 
     if !is_public && !check_auth(req) {
+        res.status_code(StatusCode::UNAUTHORIZED);
         res.render(Json(APIResponse::<Option<String>> {
             code: 401,
             msg: "unauthorized: missing or invalid API key".to_string(),
@@ -157,17 +165,38 @@ async fn auth_and_rate_limit(
         .get()
         .and_then(|a| (a.rate_limit > 0).then_some(a.rate_limit))
     {
-        let ip = req.remote_addr().clone().into_std().map(|a| a.ip());
+        let trust_forwarded = ARGS.get().is_some_and(|a| a.trust_forwarded_for);
+        let forwarded_ip = if trust_forwarded {
+            req.headers()
+                .get("x-forwarded-for")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.split(',').next())
+                .and_then(|v| v.trim().parse::<IpAddr>().ok())
+        } else {
+            None
+        };
+        let ip = forwarded_ip.or_else(|| req.remote_addr().clone().into_std().map(|a| a.ip()));
         let window = Duration::from_secs(10);
 
         if let Some(ip) = ip {
             let mut map = RATE_LIMIT.lock().await;
-            let hits = map.entry(ip).or_default();
 
-            // Drop entries outside the window
+            // Periodically drop IPs whose timestamps have all expired; without
+            // this the map grows for the lifetime of the process.
+            if map.len() > 4096 {
+                map.retain(|_, hits| {
+                    hits.retain(|t| t.elapsed() < window);
+                    !hits.is_empty()
+                });
+            }
+
+            let hits = map.entry(ip).or_default();
             hits.retain(|t| t.elapsed() < window);
 
             if hits.len() >= limit {
+                res.status_code(StatusCode::TOO_MANY_REQUESTS);
+                res.headers_mut()
+                    .insert("retry-after", HeaderValue::from_static("1"));
                 res.render(Json(APIResponse::<Option<String>> {
                     code: 429,
                     msg: "rate limit exceeded, please slow down".to_string(),
@@ -249,6 +278,11 @@ struct Args {
     #[arg(long, default_value_t = 0)]
     rate_limit: usize,
 
+    /// Use the first `X-Forwarded-For` address for rate limiting.
+    /// Only enable this behind a reverse proxy you control.
+    #[arg(long)]
+    trust_forwarded_for: bool,
+
     /// Optional API key; when set, all REST / MCP requests must carry
     /// an `Authorization: Bearer <key>` or `x-api-key: <key>` header.
     #[arg(long)]
@@ -302,6 +336,13 @@ struct OCRRequest {
 
     /// Color filter, e.g. `red`, `["red", "blue"]` or `[[[0, 50, 50], [10, 255, 255]]]`.
     color_filter: Option<Value>,
+
+    /// Output case: `keep` (default), `lower` or `upper`.
+    case: Option<String>,
+
+    /// Reject the result when the average per-character confidence is below
+    /// this value (0.0–1.0); the server returns HTTP 422 instead.
+    min_confidence: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -315,7 +356,7 @@ struct OCRResponse {
     /// Charset corresponding to the probability matrix (stable order).
     charset: Option<Vec<String>>,
 
-    /// Overall recognition confidence (average of the per-character max probabilities); only returned when probabilities are requested.
+    /// Overall recognition confidence (average of the per-character max probabilities).
     confidence: Option<f64>,
 }
 
@@ -338,6 +379,13 @@ struct SolveRequest {
 
     /// Color filter, e.g. `red`, `["red", "blue"]` or `[[[0, 50, 50], [10, 255, 255]]]`.
     color_filter: Option<Value>,
+
+    /// Output case: `keep` (default), `lower` or `upper`.
+    case: Option<String>,
+
+    /// Reject the result when the average per-character confidence is below
+    /// this value (0.0–1.0); the server returns HTTP 422 instead.
+    min_confidence: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -366,7 +414,7 @@ struct SolveResponse {
     /// Charset corresponding to the probability matrix (stable order).
     charset: Option<Vec<String>>,
 
-    /// Overall recognition confidence; only returned when probabilities are requested.
+    /// Overall recognition confidence.
     confidence: Option<f64>,
 
     /// Name of the currently loaded model (`--manifest` entry name or built-in name).
@@ -581,6 +629,46 @@ struct APIResponse<T> {
     data: Option<T>,
 }
 
+/// Returns HTTP 422 when a result is below the caller's confidence floor.
+fn reject_low_confidence(
+    res: &mut Response,
+    confidence: Option<f64>,
+    min_confidence: Option<f64>,
+) -> bool {
+    let (Some(confidence), Some(min)) = (confidence, min_confidence) else {
+        return false;
+    };
+
+    if confidence >= min {
+        return false;
+    }
+
+    res.status_code(StatusCode::UNPROCESSABLE_ENTITY);
+    res.render(Json(APIResponse::<Option<String>> {
+        code: 422,
+        msg: format!("low confidence: {confidence:.3} < {min:.3}"),
+        data: None,
+    }));
+    true
+}
+
+/// Applies the optional `case` normalization to a recognition result.
+fn apply_case(text: String, case: Option<&str>) -> anyhow::Result<String> {
+    match case.unwrap_or("keep") {
+        "keep" => Ok(text),
+        "lower" => Ok(text.to_lowercase()),
+        "upper" => Ok(text.to_uppercase()),
+        other => anyhow::bail!("invalid case {other:?}; expected keep, lower or upper"),
+    }
+}
+
+/// Decodes a request image, reporting malformed base64 as a client error.
+fn decode_base64(input: &str) -> anyhow::Result<Vec<u8>> {
+    BASE64_STANDARD
+        .decode(input)
+        .map_err(|e| anyhow::anyhow!("invalid base64: {e}"))
+}
+
 /// Parses the `color_filter` request field.
 fn parse_color_filter(value: Option<Value>) -> anyhow::Result<Option<ColorFilter>> {
     value
@@ -623,7 +711,7 @@ async fn classify(
     Option<Vec<String>>,
     Option<f64>,
 )> {
-    let image = BASE64_STANDARD.decode(image)?;
+    let image = decode_base64(image)?;
 
     if charset_range.is_some() || probability {
         let mut result = run_blocking_inference(move || {
@@ -645,14 +733,14 @@ async fn classify(
 
         Ok((text, probability, charset, confidence))
     } else {
-        let text = run_blocking_inference(move || {
+        let (text, confidence) = run_blocking_inference(move || {
             OCR.get()
                 .unwrap()
-                .classification_with_options(image, png_fix, color_filter)
+                .classification_with_confidence_options(image, png_fix, color_filter)
         })
         .await?;
 
-        Ok((text, None, None, None))
+        Ok((text, None, None, Some(confidence)))
     }
 }
 
@@ -671,6 +759,11 @@ async fn route_ocr(req: JsonBody<OCRRequest>, res: &mut Response) -> anyhow::Res
         color_filter,
     )
     .await?;
+    let text = apply_case(text, req.case.as_deref())?;
+
+    if reject_low_confidence(res, confidence, req.min_confidence) {
+        return Ok(());
+    }
 
     let response = OCRResponse {
         text,
@@ -710,6 +803,11 @@ async fn route_solve(req: JsonBody<SolveRequest>, res: &mut Response) -> anyhow:
         color_filter,
     )
     .await?;
+    let text = apply_case(text, req.case.as_deref())?;
+
+    if reject_low_confidence(res, confidence, req.min_confidence) {
+        return Ok(());
+    }
 
     let math = if req.math.as_deref().unwrap_or("auto") == "off" {
         None
@@ -752,9 +850,8 @@ async fn route_solve_click(
     req: JsonBody<SolveClickRequest>,
     res: &mut Response,
 ) -> anyhow::Result<()> {
-    let image_bytes = BASE64_STANDARD.decode(&req.image)?;
+    let image_bytes = decode_base64(&req.image)?;
     let score_threshold = req.score_threshold.unwrap_or(0.3);
-    let charset_range = resolve_charset_range(req.charset_range.as_deref()).await?;
 
     let targets = req
         .prompt
@@ -765,11 +862,32 @@ async fn route_solve_click(
         .as_ref()
         .map(|prompt| prompt.iter().collect::<String>());
 
+    // A prompt lists every character that can appear in the answer. Restrict
+    // recognition to those characters unless the caller supplied a range.
+    let prompt_charset = targets.as_ref().map(|prompt| {
+        let mut chars = String::new();
+        for &c in prompt {
+            if !chars.contains(c) {
+                chars.push(c);
+            }
+        }
+        chars
+    });
+    let charset_range = match req.charset_range.as_deref() {
+        Some(value) => resolve_charset_range(Some(value)).await?,
+        None => match prompt_charset.as_deref() {
+            Some(value) => resolve_charset_range(Some(value)).await?,
+            None => None,
+        },
+    };
+    let restricted = charset_range.is_some();
+
     let (points, boxes, unmatched) = run_blocking_inference(move || {
-        let image = image::load_from_memory(&image_bytes)?;
+        let image = kaptchaocr::decode_image(&image_bytes)?;
         let detections = DET.get().unwrap().detection_with_score(&image_bytes)?;
 
         let mut hits: Vec<(BBox, f32, String)> = Vec::new();
+        let mut box_scores: Vec<Vec<f32>> = Vec::new();
 
         for (bbox, score) in detections {
             if score < score_threshold {
@@ -799,7 +917,7 @@ async fn route_solve_click(
             let mut png = std::io::Cursor::new(Vec::new());
             crop.write_to(&mut png, image::ImageFormat::Png)?;
 
-            let text = match &charset_range {
+            let (text, scores) = match &charset_range {
                 Some(range) => {
                     let mut result = OCR.get().unwrap().classification_probability_with_options(
                         png.into_inner(),
@@ -807,16 +925,42 @@ async fn route_solve_click(
                         None,
                         Some(range.clone()),
                     )?;
-                    result.get_text().to_string()
+                    let text = result.get_text().to_string();
+                    let scores = match &targets {
+                        Some(prompt) => prompt
+                            .iter()
+                            .map(|target| {
+                                let target = target.to_string();
+                                result
+                                    .charset
+                                    .iter()
+                                    .position(|c| c == &target)
+                                    .map(|idx| {
+                                        result
+                                            .probability
+                                            .iter()
+                                            .map(|row| row.get(idx).copied().unwrap_or(0.0))
+                                            .fold(0.0, f32::max)
+                                    })
+                                    .unwrap_or(-1.0)
+                            })
+                            .collect(),
+                        None => Vec::new(),
+                    };
+                    (text, scores)
                 }
                 None => {
-                    OCR.get()
-                        .unwrap()
-                        .classification_with_options(png.into_inner(), false, None)?
+                    let text = OCR.get().unwrap().classification_with_options(
+                        png.into_inner(),
+                        false,
+                        None,
+                    )?;
+                    (text, Vec::new())
                 }
             };
 
             hits.push((bbox, score, text));
+            box_scores.push(scores);
         }
 
         // Returned boxes are in reading order; the indexes used for matching keep detection order.
@@ -835,10 +979,14 @@ async fn route_solve_click(
             })
             .collect();
 
-        let recognized: Vec<String> = hits.iter().map(|(_, _, text)| text.clone()).collect();
-
         let (order, unmatched) = match &targets {
+            Some(prompt) if restricted => {
+                let matched = kaptchaocr::click::match_prompt_scores(prompt, &box_scores);
+                (matched.order, matched.unmatched)
+            }
             Some(prompt) => {
+                let recognized: Vec<String> =
+                    hits.iter().map(|(_, _, text)| text.clone()).collect();
                 let matched = kaptchaocr::click::match_prompt(prompt, &recognized);
                 (matched.order, matched.unmatched)
             }
@@ -885,7 +1033,7 @@ async fn route_solve_click(
 
 #[endpoint(responses((status_code = 200, body = APIResponse<DETResponse>)))]
 async fn route_det(req: JsonBody<DETRequest>, res: &mut Response) -> anyhow::Result<()> {
-    let image = BASE64_STANDARD.decode(&req.image)?;
+    let image = decode_base64(&req.image)?;
     let detections =
         run_blocking_inference(|| DET.get().unwrap().detection_with_score(image)).await?;
     let bboxes = detections
@@ -966,6 +1114,11 @@ async fn route_ocr_upload(req: &mut Request, res: &mut Response) -> anyhow::Resu
             .fields
             .get("color_filter")
             .and_then(|s| serde_json::from_str::<Value>(s).ok()),
+        case: form.fields.get("case").cloned(),
+        min_confidence: form
+            .fields
+            .get("min_confidence")
+            .and_then(|s| s.parse::<f64>().ok()),
     };
 
     let mut sub_req = salvo::Request::new();
@@ -1024,8 +1177,8 @@ async fn route_slide_match(
     req: JsonBody<SlideMatchRequest>,
     res: &mut Response,
 ) -> anyhow::Result<()> {
-    let target_image = BASE64_STANDARD.decode(&req.target_image)?;
-    let background_image = BASE64_STANDARD.decode(&req.background_image)?;
+    let target_image = decode_base64(&req.target_image)?;
+    let background_image = decode_base64(&req.background_image)?;
 
     let result = run_blocking_inference(move || {
         if req.simple_target.unwrap_or_default() {
@@ -1063,8 +1216,8 @@ async fn route_slide_comparison(
     req: JsonBody<SlideComparisonRequest>,
     res: &mut Response,
 ) -> anyhow::Result<()> {
-    let target_image = BASE64_STANDARD.decode(&req.target_image)?;
-    let background_image = BASE64_STANDARD.decode(&req.background_image)?;
+    let target_image = decode_base64(&req.target_image)?;
+    let background_image = decode_base64(&req.background_image)?;
     let result =
         run_blocking_inference(|| slide_comparison(target_image, background_image)).await?;
     let response = SlideComparisonResponse {
@@ -1093,8 +1246,8 @@ async fn route_slide_solve(
     req: JsonBody<SlideSolveRequest>,
     res: &mut Response,
 ) -> anyhow::Result<()> {
-    let target_image = BASE64_STANDARD.decode(&req.target_image)?;
-    let background_image = BASE64_STANDARD.decode(&req.background_image)?;
+    let target_image = decode_base64(&req.target_image)?;
+    let background_image = decode_base64(&req.background_image)?;
     let simple_target = req.simple_target.unwrap_or_default();
 
     let result = run_blocking_inference(move || {
@@ -1291,8 +1444,9 @@ async fn handle_single_rpc(
                     tools.retain(|tool| {
                         let name = tool["name"].as_str().unwrap_or_default();
                         match name {
-                            "ocr" => args.ocr,
+                            "ocr" | "solve" => args.ocr,
                             "det" => args.det,
+                            "solve_click" => args.det && args.ocr,
                             "slide_match" | "slide_comparison" => args.slide,
                             _ => false,
                         }
@@ -1314,7 +1468,7 @@ async fn handle_single_rpc(
             let id = req_body.id.clone();
 
             match v.params.name.as_ref() {
-                "ocr" | "det" | "slide_match" | "slide_comparison" => {
+                "ocr" | "solve" | "det" | "solve_click" | "slide_match" | "slide_comparison" => {
                     let mut req = salvo::Request::new();
 
                     req.add_header("content-type", "application/json", true)?;
@@ -1338,8 +1492,20 @@ async fn handle_single_rpc(
                                 .await;
                             Ok(None)
                         }
+                        "solve" if args.ocr => {
+                            route_solve
+                                .handle(req, depot, &mut sub_res, &mut sub_ctrl)
+                                .await;
+                            Ok(None)
+                        }
                         "det" if args.det => {
                             route_det
+                                .handle(req, depot, &mut sub_res, &mut sub_ctrl)
+                                .await;
+                            Ok(None)
+                        }
+                        "solve_click" if args.det && args.ocr => {
+                            route_solve_click
                                 .handle(req, depot, &mut sub_res, &mut sub_ctrl)
                                 .await;
                             Ok(None)
@@ -1480,15 +1646,48 @@ async fn route_mcp(
     Ok(())
 }
 
+/// Maps known bad-input errors to a short client-facing message.
+fn client_error_message(text: &str) -> Option<&'static str> {
+    if text.contains("invalid base64") {
+        Some("invalid base64")
+    } else if text.contains("unsupported or invalid image") {
+        Some("unsupported image format")
+    } else if text.contains("aspect ratio") {
+        Some("image aspect ratio too wide")
+    } else if text.contains("requested resize") || text.contains("model input") {
+        Some("image is too large")
+    } else if text.contains("invalid case") {
+        Some("invalid case (use keep, lower or upper)")
+    } else if text.contains("missing image file field") {
+        Some("missing image file")
+    } else if text.contains("invalid multipart") {
+        Some("invalid multipart form")
+    } else {
+        None
+    }
+}
+
 #[handler]
 fn default_error_handler(res: &mut Response) {
     if let ResBody::Error(v) = &res.body {
-        // Log the full error, send only a generic message to the client to avoid leaking internal details
-        error!("request failed: {}", v.to_string());
+        let text = v.to_string();
 
+        // Log the full error, but never leak internal details to the client.
+        error!("request failed: {text}");
+
+        let (status, msg) = match client_error_message(&text) {
+            Some(msg) => (StatusCode::BAD_REQUEST, msg.to_string()),
+            None if v.code.is_client_error() => (v.code, text),
+            None => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "internal server error".to_string(),
+            ),
+        };
+
+        res.status_code(status);
         res.render(Json(APIResponse {
-            code: v.code.as_u16(),
-            msg: "internal server error".to_string(),
+            code: status.as_u16(),
+            msg,
             data: <Option<String>>::None,
         }));
     } else {
@@ -1508,6 +1707,7 @@ struct Config {
     det_path: Option<String>,
     max_concurrency: Option<usize>,
     rate_limit: Option<usize>,
+    trust_forwarded_for: Option<bool>,
     api_key: Option<String>,
     num_threads: Option<usize>,
 }
@@ -1560,6 +1760,7 @@ fn apply_config(mut args: Args) -> anyhow::Result<Args> {
     merge!(det_path);
     merge!(max_concurrency);
     merge!(rate_limit);
+    merge!(trust_forwarded_for);
     merge!(api_key, Option);
     merge!(num_threads);
 

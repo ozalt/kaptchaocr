@@ -79,6 +79,99 @@
       }
     },
     {
+      "name": "solve",
+      "description": "Recognize a CAPTCHA and, when the text is an arithmetic expression, return the answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "image": {
+            "type": "string",
+            "description": "The image to recognize, base64 encoded."
+          },
+          "math": {
+            "type": "string",
+            "description": "Math mode: 'auto' (default) or 'off'."
+          },
+          "png_fix": {
+            "type": "boolean",
+            "description": "If true, supports PNG images with transparent black backgrounds."
+          },
+          "probability": {
+            "type": "boolean",
+            "description": "Whether to return probability information."
+          },
+          "charset_range": {
+            "type": "string",
+            "description": "Limits the character range for this call."
+          },
+          "color_filter": {
+            "description": "Color filter, e.g., 'red' or ['red', 'blue'] or [[[0, 50, 50], [10, 255, 255]]].",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  }
+                }
+              }
+            ]
+          },
+          "case": {
+            "type": "string",
+            "enum": [
+              "keep",
+              "lower",
+              "upper"
+            ],
+            "description": "Output case normalization."
+          },
+          "min_confidence": {
+            "type": "number",
+            "description": "Reject results below this average confidence with a 422."
+          }
+        },
+        "required": [
+          "image"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The recognized text."
+          },
+          "math": {
+            "type": "object",
+            "description": "Parsed expression, result and answer when applicable."
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Average per-character confidence."
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    {
       "name": "det",
       "description": "Perform object detection on the provided image to find bounding boxes.",
       "inputSchema": {
@@ -111,6 +204,63 @@
         },
         "required": [
           "bboxes"
+        ]
+      }
+    },
+    {
+      "name": "solve_click",
+      "description": "Detect glyph boxes in a click CAPTCHA, recognize them, and order the click points for the prompt.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "image": {
+            "type": "string",
+            "description": "The click CAPTCHA image, base64 encoded."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Click instruction, e.g. 请依次点击【A,B,C】."
+          },
+          "score_threshold": {
+            "type": "number",
+            "description": "Minimum detection score; defaults to 0.3."
+          },
+          "charset_range": {
+            "type": "string",
+            "description": "Optional character range override."
+          }
+        },
+        "required": [
+          "image"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "Parsed prompt characters."
+          },
+          "points": {
+            "type": "array",
+            "description": "Click coordinates in prompt order."
+          },
+          "boxes": {
+            "type": "array",
+            "description": "All recognized boxes."
+          },
+          "unmatched": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Prompt characters with no matching box."
+          }
+        },
+        "required": [
+          "points",
+          "boxes",
+          "unmatched"
         ]
       }
     },

@@ -17,7 +17,21 @@ docker build -t kaptchaocr .
 docker run --rm -p 8000:8000 kaptchaocr
 ```
 
-The resulting image is ~711 MB. `HEALTHCHECK` probes `/healthz`.
+The resulting image is roughly 450 MB on Linux/amd64. `HEALTHCHECK` probes
+`/healthz`.
+
+## Run as a service
+
+Use `--restart` so the container comes back after a reboot or crash, and a
+memory limit so a bad request cannot take down the host:
+
+```sh
+docker run -d --name kaptchaocr --restart unless-stopped \
+  --memory 2g --publish 8000:8000 kaptchaocr
+```
+
+Behind a reverse proxy, add `--trust-forwarded-for` only if the proxy is the
+only route to the container; otherwise clients can spoof their rate-limit key.
 
 ## Override the defaults
 

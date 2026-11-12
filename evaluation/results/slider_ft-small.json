@@ -1,0 +1,7 @@
+{
+ "n": 200,
+ "within_3px": 0.475,
+ "within_8px": 0.49,
+ "median_err_px": 14,
+ "mean_ms": 50.0
+}

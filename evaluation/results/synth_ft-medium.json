@@ -1,0 +1,100 @@
+{
+ "python_captcha_lib": {
+  "n": 300,
+  "exact": 0.53,
+  "exact_ci": 0.77,
+  "cer": 0.1297,
+  "mean_ms": 93.1,
+  "errors_sample": [
+   [
+    "cQSfgX",
+    "cQSfgx"
+   ],
+   [
+    "flTh",
+    "f1Ih"
+   ],
+   [
+    "7mD4HQ",
+    "7mDHQ"
+   ],
+   [
+    "QZclr",
+    "QZc1r"
+   ],
+   [
+    "vL0DE",
+    "VL0DE"
+   ],
+   [
+    "4kCUXH",
+    "4kcUXH"
+   ],
+   [
+    "srhXl",
+    "srhXI"
+   ],
+   [
+    "qPmwgS",
+    "qPmw8S"
+   ],
+   [
+    "Uefzn",
+    "UefZn"
+   ],
+   [
+    "5sZc",
+    "5SZC"
+   ]
+  ]
+ },
+ "pil_rotated_noise": {
+  "n": 300,
+  "exact": 0.5433,
+  "exact_ci": 0.7667,
+  "cer": 0.1254,
+  "mean_ms": 80.7,
+  "errors_sample": [
+   [
+    "pz5XW",
+    "pz5Xw"
+   ],
+   [
+    "6xXzo",
+    "6xxzo"
+   ],
+   [
+    "Wo9Q",
+    "W9Q"
+   ],
+   [
+    "eK3H",
+    "ekBH"
+   ],
+   [
+    "MeUMBB",
+    "MeUM8B"
+   ],
+   [
+    "KZyP",
+    "KzyP"
+   ],
+   [
+    "mhZfVC",
+    "mhZfvc"
+   ],
+   [
+    "xkiJW1",
+    "xkiJw"
+   ],
+   [
+    "3ZDOd",
+    "3zDOd"
+   ],
+   [
+    "nAOYYq",
+    "nA0YYq"
+   ]
+  ]
+ }
+}

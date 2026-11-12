@@ -24,6 +24,23 @@ CAPTCHA data**. Every number here comes from the raw CSVs in
   (0% exact on `birch`) while keeping respectable character accuracy;
   fine-tuning fixes exactly that.
 
+### Unseen generators
+
+The six held-out sets are image-disjoint but come from the same sources as
+training. On generators the models never saw, accuracy drops:
+
+| Generator (300 images each) | Model | Exact | Case-insensitive | CER |
+| --- | --- | ---: | ---: | ---: |
+| Python `captcha` library | `ft-small` | 39.3% | 70.7% | 0.188 |
+| Python `captcha` library | `ft-medium` | 53.0% | 77.0% | 0.130 |
+| PIL: rotated glyphs, lines, speckle | `ft-small` | 63.7% | 78.0% | 0.092 |
+| PIL: rotated glyphs, lines, speckle | `ft-medium` | 54.3% | 76.7% | 0.125 |
+
+`ft-medium` is not uniformly better out of distribution. About half of the
+errors are case-only. Raw outputs are in
+[`evaluation/results/`](../evaluation/results/); the harness is
+[`evaluation/run_eval.py`](../evaluation/run_eval.py).
+
 ## Recognition (OCR)
 
 <picture>
@@ -158,17 +175,19 @@ Sorted by F1@0.5. Glyph-level ground truth; greedy polygon matching.
   loaded sequentially; one warm-up image per model.
 - **Latency:** mean wall-clock ms per image, including pre-processing. These
   are rough comparisons on one machine, not a throughput guarantee.
-- **Recognition:** `eval_dataset` over the public recognition dataset's six
-  held-out splits; exact match is case-sensitive.
-- **Detection:** `eval_det` over the public detection dataset's images and box
-  annotations; polygon IoU with greedy matching at 0.5 and 0.75.
+- **Recognition:** `evaluation/run_eval.py` over the public recognition
+  dataset's six held-out splits; exact match is case-sensitive.
+- **Detection:** the F1 sweep used the original `eval_det` harness against the
+  public detection dataset's images and box annotations, with polygon IoU and
+  greedy matching at 0.5 and 0.75. The public harness covers end-to-end click
+  accuracy instead.
 - **Model sizes** are the ONNX file sizes.
 
 ### Reproduce the charts
 
-The raw inference outputs are committed here. Re-running inference needs the
-private evaluation harness; the public repo can regenerate every chart from the
-committed CSVs:
+The raw inference outputs are committed here. Re-run recognition and click
+checks with [`evaluation/run_eval.py`](../evaluation/run_eval.py); every chart
+can also be regenerated from the committed CSVs:
 
 ```sh
 python3 -m pip install matplotlib numpy

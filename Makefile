@@ -8,7 +8,7 @@ BIN     := target/release/kaptchaocr
 PROFILE ?= balanced
 ADDR    ?= 127.0.0.1:8000
 
-.PHONY: help build run docker docker-run test check fmt clean
+.PHONY: help build run docker docker-run test check fmt eval clean
 
 help: ## show this help
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -36,6 +36,9 @@ check: ## fmt check + clippy (both feature configs)
 
 fmt: ## format the code
 	cargo fmt --all
+
+eval: ## run synth checks against a running server (ADDR=host:port)
+	python3 evaluation/run_eval.py --url http://$(ADDR) --data . --suites synth --limit 20
 
 clean: ## remove build artifacts
 	cargo clean

@@ -34,6 +34,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
+## 86maid/ddddocr (Rust port)
+
+- Upstream: <https://github.com/86maid/ddddocr>
+- License: the repository README declares Apache-2.0, but no `LICENSE` file is
+  present in the upstream repository at the time of writing.
+- Used for: the Rust API shape and algorithms this project was adapted from
+  (`classification_with_png_fix`, `slide_comparison`, charset ranges, MCP tool
+  naming). No source file or model weight from this repository is
+  redistributed.
+- This is an attribution notice; it does not grant rights beyond those in the
+  upstream project.
+
 ## PaddleOCR / PP-OCRv6
 
 - Upstream: <https://github.com/PaddlePaddle/PaddleOCR>

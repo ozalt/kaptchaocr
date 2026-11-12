@@ -46,7 +46,7 @@ pub fn solve(text: &str) -> Option<MathSolution> {
         || !expression.chars().any(|c| c.is_ascii_digit())
         || !expression
             .chars()
-            .any(|c| matches!(c, '+' | '-' | '*' | '/' | '?'))
+            .any(|c| matches!(c, '+' | '-' | '*' | '/'))
         || !expression
             .chars()
             .all(|c| c.is_ascii_digit() || matches!(c, '+' | '-' | '*' | '/' | '=' | '?'))
@@ -529,7 +529,14 @@ mod tests {
         assert_eq!(answer("?×6=42"), "7");
         assert_eq!(answer("12/?=4"), "3");
         assert_eq!(answer("5+2=?"), "7");
-        assert_eq!(answer("?=5"), "5");
+        assert!(solve("?=5").is_none(), "no binary operator");
+    }
+
+    #[test]
+    fn rejects_ocr_missing_operator() {
+        assert!(solve("113=?").is_none());
+        assert!(solve("204=?").is_none());
+        assert!(solve("11+7?").is_none());
     }
 
     #[test]
